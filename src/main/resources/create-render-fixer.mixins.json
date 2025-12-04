@@ -5,6 +5,8 @@
 	"plugin": "net.saint.createrenderfixer.ModMixinPlugin",
 	"client": [
 		"BlockEntityInstanceAccessor",
+		"LevelRendererAccessor",
+		"RenderChunkInfoAccessor",
 		"flw/InstanceManagerMixin",
 		"create/MixerInstanceMixin",
 		"create/PressInstanceMixin",
