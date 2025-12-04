@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"package": "net.saint.createrenderfixer.mixin",
+	"compatibilityLevel": "JAVA_17",
+	"plugin": "net.saint.createrenderfixer.ModMixinPlugin",
+	"client": [
+		"SupportsMixin",
+		"CatwalksMixin",
+		"MeshFencesMixin",
+		"WedgesMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
