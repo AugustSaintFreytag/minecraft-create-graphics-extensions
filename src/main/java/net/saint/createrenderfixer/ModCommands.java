@@ -10,7 +10,9 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Registers simple server-side commands to tweak runtime config flags.
@@ -39,7 +41,14 @@ public final class ModCommands {
 								.then(Commands.argument("value", BoolArgumentType.bool())
 										.executes(ctx -> setBoolean(ctx, "freezeDistantInstances", ModConfig::setFreezeDistantInstances))))
 						.then(Commands.literal("freezeDistanceBlocks").then(
-								Commands.argument("blocks", IntegerArgumentType.integer(0)).executes(ModCommands::setFreezeDistance))));
+								Commands.argument("blocks", IntegerArgumentType.integer(0)).executes(ModCommands::setFreezeDistance))))
+				.then(Commands.literal("blacklist")
+						.then(Commands.literal("add")
+								.then(Commands.argument("id", ResourceLocationArgument.id()).executes(ModCommands::addToBlacklist)))
+						.then(Commands.literal("remove")
+								.then(Commands.argument("id", ResourceLocationArgument.id()).executes(ModCommands::removeFromBlacklist)))
+						.then(Commands.literal("clear").executes(ModCommands::clearBlacklist))
+						.then(Commands.literal("list").executes(ModCommands::listBlacklist)));
 	}
 
 	private static int listFlags(CommandContext<CommandSourceStack> ctx) {
@@ -57,7 +66,33 @@ public final class ModCommands {
 	private static int setFreezeDistance(CommandContext<CommandSourceStack> ctx) {
 		int blocks = IntegerArgumentType.getInteger(ctx, "blocks");
 		ModConfig.setFreezeBlockDistance(blocks);
-		ctx.getSource().sendSuccess(() -> Component.literal("freezeDistanceBlocks set to " + blocks), false);
+		ctx.getSource().sendSuccess(() -> Component.literal("freezeBlockDistance set to " + blocks), false);
+		return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+	}
+
+	private static int addToBlacklist(CommandContext<CommandSourceStack> ctx) {
+		ResourceLocation id = ResourceLocationArgument.getId(ctx, "id");
+		ModConfig.addFreezeBlacklist(id);
+		ctx.getSource().sendSuccess(() -> Component.literal("Added to freeze blacklist: " + id), false);
+		return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+	}
+
+	private static int removeFromBlacklist(CommandContext<CommandSourceStack> ctx) {
+		ResourceLocation id = ResourceLocationArgument.getId(ctx, "id");
+		ModConfig.removeFreezeBlacklist(id);
+		ctx.getSource().sendSuccess(() -> Component.literal("Removed from freeze blacklist: " + id), false);
+		return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+	}
+
+	private static int clearBlacklist(CommandContext<CommandSourceStack> ctx) {
+		ModConfig.clearFreezeBlacklist();
+		ctx.getSource().sendSuccess(() -> Component.literal("Cleared freeze blacklist"), false);
+		return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+	}
+
+	private static int listBlacklist(CommandContext<CommandSourceStack> ctx) {
+		var ids = ModConfig.freezeBlacklist();
+		ctx.getSource().sendSuccess(() -> Component.literal("Freeze blacklist (" + ids.size() + "): " + ids), false);
 		return com.mojang.brigadier.Command.SINGLE_SUCCESS;
 	}
 }

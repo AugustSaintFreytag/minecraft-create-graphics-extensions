@@ -5,6 +5,7 @@
 	"plugin": "net.saint.createrenderfixer.ModMixinPlugin",
 	"client": [
 		"BlockEntityInstanceAccessor",
+		"flw/MixinInstanceManager",
 		"create/MixinMixerInstance",
 		"create/MixinPressInstance",
 		"createdeco/SupportsMixin",

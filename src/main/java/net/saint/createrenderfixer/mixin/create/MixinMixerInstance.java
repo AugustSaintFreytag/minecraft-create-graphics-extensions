@@ -14,8 +14,6 @@ import com.simibubi.create.content.kinetics.mixer.MechanicalMixerBlockEntity;
 import com.simibubi.create.content.kinetics.mixer.MixerInstance;
 import com.simibubi.create.foundation.utility.AnimationTickHolder;
 
-import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.saint.createrenderfixer.ModConfig;
 
 @Mixin(MixerInstance.class)
@@ -51,11 +49,6 @@ public abstract class MixinMixerInstance {
 
 	@Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true, remap = false)
 	private void crf$cacheAndFreeze(CallbackInfo callbackInfo) {
-		if (ModConfig.freezeDistantInstances() && crf$isFrozen()) {
-			callbackInfo.cancel();
-			return;
-		}
-
 		if (!ModConfig.cacheDynamicInstances()) {
 			return;
 		}
@@ -94,29 +87,5 @@ public abstract class MixinMixerInstance {
 	@Unique
 	private boolean crf$shouldUpdateSpeed(float headSpeed) {
 		return Float.isNaN(crf$lastHeadSpeed) || Math.abs(crf$lastHeadSpeed - headSpeed) > 1.0e-5f;
-	}
-
-	@Unique
-	private boolean crf$isFrozen() {
-		int freezeDistance = ModConfig.freezeBlockDistance();
-
-		if (freezeDistance <= 0) {
-			return false;
-		}
-
-		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-
-		if (camera == null) {
-			return false;
-		}
-
-		var cam = camera.getPosition();
-		var pos = mixer.getBlockPos();
-		var dx = cam.x - (pos.getX() + 0.5d);
-		var dy = cam.y - (pos.getY() + 0.5d);
-		var dz = cam.z - (pos.getZ() + 0.5d);
-		var distSq = dx * dx + dy * dy + dz * dz;
-
-		return distSq > (double) freezeDistance * (double) freezeDistance;
 	}
 }

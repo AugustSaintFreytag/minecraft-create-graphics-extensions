@@ -12,7 +12,6 @@ import com.jozufozu.flywheel.core.materials.oriented.OrientedData;
 import com.simibubi.create.content.kinetics.press.MechanicalPressBlockEntity;
 import com.simibubi.create.content.kinetics.press.PressInstance;
 
-import net.minecraft.client.Minecraft;
 import net.saint.createrenderfixer.ModConfig;
 import net.saint.createrenderfixer.mixin.BlockEntityInstanceAccessor;
 
@@ -35,11 +34,6 @@ public abstract class MixinPressInstance {
 
 	@Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true, remap = false)
 	private void crf$cacheAndFreeze(CallbackInfo callbackInfo) {
-		if (ModConfig.freezeDistantInstances() && crf$isFrozen()) {
-			callbackInfo.cancel();
-			return;
-		}
-
 		if (!ModConfig.cacheDynamicInstances()) {
 			return;
 		}
@@ -66,32 +60,5 @@ public abstract class MixinPressInstance {
 	@Unique
 	private boolean crf$shouldUpdate(float offset) {
 		return Float.isNaN(crf$lastHeadOffset) || Math.abs(crf$lastHeadOffset - offset) > 1.0e-5f;
-	}
-
-	@Unique
-	private boolean crf$isFrozen() {
-		var freezeDistance = ModConfig.freezeBlockDistance();
-
-		if (freezeDistance <= 0) {
-			return false;
-		}
-
-		var instance = (PressInstance) (Object) this;
-		var blockEntityAccessor = (BlockEntityInstanceAccessor<MechanicalPressBlockEntity>) instance;
-		var blockEntity = blockEntityAccessor.getBlockEntity();
-		var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-
-		if (camera == null) {
-			return false;
-		}
-
-		var cam = camera.getPosition();
-		var pos = blockEntity.getBlockPos();
-		var dx = cam.x - (pos.getX() + 0.5d);
-		var dy = cam.y - (pos.getY() + 0.5d);
-		var dz = cam.z - (pos.getZ() + 0.5d);
-		var distSq = dx * dx + dy * dy + dz * dz;
-
-		return distSq > (double) freezeDistance * (double) freezeDistance;
 	}
 }
