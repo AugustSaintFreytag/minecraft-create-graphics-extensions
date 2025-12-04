@@ -18,10 +18,10 @@ import net.saint.createrenderfixer.mixin.BlockEntityInstanceAccessor;
  * Freezes dynamic instances beyond a configurable distance to avoid large batched buffer updates.
  */
 @Mixin(value = InstanceManager.class, remap = false)
-public abstract class MixinInstanceManager {
+public abstract class InstanceManagerMixin {
 
 	@Inject(method = "updateInstance", at = @At("HEAD"), cancellable = true)
-	private void crf$freezeFar(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY, int cZ,
+	private void crf$updateInstance(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY, int cZ,
 			CallbackInfo callbackInfo) {
 		if (!ModConfig.freezeDistantInstances()) {
 			return;

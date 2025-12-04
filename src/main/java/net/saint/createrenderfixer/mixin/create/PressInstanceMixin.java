@@ -16,7 +16,7 @@ import net.saint.createrenderfixer.ModConfig;
 import net.saint.createrenderfixer.mixin.BlockEntityInstanceAccessor;
 
 @Mixin(PressInstance.class)
-public abstract class MixinPressInstance {
+public abstract class PressInstanceMixin {
 
 	// Properties
 

@@ -17,7 +17,7 @@ import com.simibubi.create.foundation.utility.AnimationTickHolder;
 import net.saint.createrenderfixer.ModConfig;
 
 @Mixin(MixerInstance.class)
-public abstract class MixinMixerInstance {
+public abstract class MixerInstanceMixin {
 
 	// Properties
 
