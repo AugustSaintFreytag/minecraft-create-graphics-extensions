@@ -1,0 +1,99 @@
+package net.saint.createrenderfixer;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.phys.Vec3;
+import net.saint.createrenderfixer.mixin.LevelRendererAccessor;
+import net.saint.createrenderfixer.mixin.RenderChunkInfoAccessor;
+
+public final class FreezeConditionUtil {
+
+	public static boolean shouldFreezePosition(BlockPos worldPosition, int cameraX, int cameraY, int cameraZ) {
+		if (!ModConfig.freezeDistantInstances()) {
+			return false;
+		}
+
+		int limit = ModConfig.freezeBlockDistance();
+		if (limit <= 0) {
+			return false;
+		}
+
+		if (worldPosition == null) {
+			return false;
+		}
+
+		if (ModConfig.freezeOccludedInstances() && isPositionOccluded(worldPosition)) {
+			return true;
+		}
+
+		int dx = worldPosition.getX() - cameraX;
+		int dy = worldPosition.getY() - cameraY;
+		int dz = worldPosition.getZ() - cameraZ;
+		long limitSq = (long) limit * (long) limit;
+		return (long) dx * dx + (long) dy * dy + (long) dz * dz > limitSq;
+	}
+
+	public static boolean shouldFreezePosition(BlockPos worldPosition) {
+		Vec3 cameraPosition = getCameraPosition();
+		if (cameraPosition == null) {
+			return false;
+		}
+
+		return shouldFreezePosition(worldPosition, (int) cameraPosition.x, (int) cameraPosition.y, (int) cameraPosition.z);
+	}
+
+	public static boolean isPositionOccluded(BlockPos position) {
+		var client = Minecraft.getInstance();
+		var levelRenderer = client.levelRenderer;
+
+		if (!(levelRenderer instanceof LevelRendererAccessor accessor)) {
+			return false;
+		}
+
+		var chunksInFrustum = accessor.getRenderChunksInFrustum();
+
+		if (position == null || chunksInFrustum == null || chunksInFrustum.isEmpty()) {
+			return false;
+		}
+
+		var section = SectionPos.of(position);
+		var sectionX = section.getX();
+		var sectionY = section.getY();
+		var sectionZ = section.getZ();
+
+		for (var chunkInfo : chunksInFrustum) {
+			var renderChunk = ((RenderChunkInfoAccessor) chunkInfo).getChunk();
+
+			if (renderChunk == null) {
+				continue;
+			}
+
+			var origin = renderChunk.getOrigin();
+			if (origin == null) {
+				continue;
+			}
+
+			var renderSection = SectionPos.of(origin);
+			if (renderSection.getX() == sectionX && renderSection.getY() == sectionY && renderSection.getZ() == sectionZ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static Vec3 getCameraPosition() {
+		var client = Minecraft.getInstance();
+		if (client == null || client.gameRenderer == null) {
+			return null;
+		}
+
+		var camera = client.gameRenderer.getMainCamera();
+		if (camera == null) {
+			return null;
+		}
+
+		return camera.getPosition();
+	}
+}
