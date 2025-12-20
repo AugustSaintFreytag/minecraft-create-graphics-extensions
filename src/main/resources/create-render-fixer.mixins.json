@@ -7,13 +7,13 @@
 		"BlockEntityInstanceAccessor",
 		"LevelRendererAccessor",
 		"RenderChunkInfoAccessor",
-		"flw/InstanceManagerMixin",
-		"create/MixerInstanceMixin",
-		"create/PressInstanceMixin",
-		"createdeco/SupportsMixin",
-		"createdeco/CatwalksMixin",
-		"createdeco/MeshFencesMixin",
-		"createdeco/WedgesMixin"
+		"flw.InstanceManagerMixin",
+		"create.MixerInstanceMixin",
+		"create.PressInstanceMixin",
+		"createdeco.SupportsMixin",
+		"createdeco.CatwalksMixin",
+		"createdeco.MeshFencesMixin",
+		"createdeco.WedgesMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
