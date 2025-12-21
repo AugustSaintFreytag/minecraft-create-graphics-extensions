@@ -15,6 +15,7 @@ import com.simibubi.create.foundation.utility.AnimationTickHolder;
 
 import net.minecraft.core.Direction;
 import net.saint.createrenderfixer.Mod;
+import net.saint.createrenderfixer.mixin.BlockEntityInstanceAccessor;
 
 @Mixin(HandCrankInstance.class)
 public abstract class HandCrankInstanceMixin {
@@ -25,10 +26,6 @@ public abstract class HandCrankInstanceMixin {
 	@Shadow
 	@Final
 	private Direction facing;
-
-	@Shadow
-	@Final
-	protected HandCrankBlockEntity blockEntity;
 
 	@Unique
 	private float crf$lastAngle = Float.NaN;
@@ -43,6 +40,8 @@ public abstract class HandCrankInstanceMixin {
 			return;
 		}
 
+		var accessor = (BlockEntityInstanceAccessor<HandCrankBlockEntity>) this;
+		var blockEntity = accessor.getBlockEntity();
 		var angle = blockEntity.getIndependentAngle(AnimationTickHolder.getPartialTicks());
 
 		if (!crf$shouldUpdate(angle)) {
@@ -53,10 +52,7 @@ public abstract class HandCrankInstanceMixin {
 		var axis = facing.getAxis();
 		var instancePosition = ((HandCrankInstance) (Object) this).getInstancePosition();
 
-		crank.loadIdentity()
-				.translate(instancePosition)
-				.centre()
-				.rotate(Direction.get(Direction.AxisDirection.POSITIVE, axis), angle)
+		crank.loadIdentity().translate(instancePosition).centre().rotate(Direction.get(Direction.AxisDirection.POSITIVE, axis), angle)
 				.unCentre();
 
 		crf$lastAngle = angle;

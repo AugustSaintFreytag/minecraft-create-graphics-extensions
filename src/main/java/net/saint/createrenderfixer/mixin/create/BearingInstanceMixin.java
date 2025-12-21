@@ -16,9 +16,12 @@ import com.simibubi.create.content.contraptions.bearing.IBearingBlockEntity;
 import com.simibubi.create.foundation.utility.AnimationTickHolder;
 
 import net.saint.createrenderfixer.Mod;
+import net.saint.createrenderfixer.mixin.BlockEntityInstanceAccessor;
 
 @Mixin(BearingInstance.class)
 public abstract class BearingInstanceMixin {
+
+	// Properties
 
 	@Shadow
 	@Final
@@ -32,12 +35,10 @@ public abstract class BearingInstanceMixin {
 	@Final
 	private Quaternionf blockOrientation;
 
-	@Shadow
-	@Final
-	protected IBearingBlockEntity blockEntity;
-
 	@Unique
 	private float crf$lastAngle = Float.NaN;
+
+	// Injections
 
 	@Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true, remap = false)
 	private void crf$cacheAndFreeze(CallbackInfo callbackInfo) {
@@ -45,6 +46,8 @@ public abstract class BearingInstanceMixin {
 			return;
 		}
 
+		var accessor = (BlockEntityInstanceAccessor<?>) this;
+		var blockEntity = (IBearingBlockEntity) accessor.getBlockEntity();
 		var angle = blockEntity.getInterpolatedAngle(AnimationTickHolder.getPartialTicks() - 1);
 
 		if (!crf$shouldUpdate(angle)) {
