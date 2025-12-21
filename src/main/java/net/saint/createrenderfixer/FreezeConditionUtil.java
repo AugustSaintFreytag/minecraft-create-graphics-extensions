@@ -9,38 +9,36 @@ import net.saint.createrenderfixer.mixin.RenderChunkInfoAccessor;
 
 public final class FreezeConditionUtil {
 
-	public static boolean shouldFreezePosition(BlockPos worldPosition, int cameraX, int cameraY, int cameraZ) {
-		if (!ModConfig.freezeDistantInstances()) {
+	public static boolean shouldFreezeAtPosition(BlockPos worldPosition, int cameraX, int cameraY, int cameraZ) {
+		if (!Mod.configProperties.freezeDistantInstances) {
 			return false;
 		}
 
-		int limit = ModConfig.freezeBlockDistance();
+		var limit = Mod.configProperties.freezeBlockDistance;
 		if (limit <= 0) {
 			return false;
 		}
 
-		if (worldPosition == null) {
-			return false;
-		}
-
-		if (ModConfig.freezeOccludedInstances() && isPositionOccluded(worldPosition)) {
+		if (Mod.configProperties.freezeOccludedInstances && isPositionOccluded(worldPosition)) {
 			return true;
 		}
 
-		int dx = worldPosition.getX() - cameraX;
-		int dy = worldPosition.getY() - cameraY;
-		int dz = worldPosition.getZ() - cameraZ;
-		long limitSq = (long) limit * (long) limit;
+		var dx = worldPosition.getX() - cameraX;
+		var dy = worldPosition.getY() - cameraY;
+		var dz = worldPosition.getZ() - cameraZ;
+		var limitSq = (long) limit * (long) limit;
+
 		return (long) dx * dx + (long) dy * dy + (long) dz * dz > limitSq;
 	}
 
 	public static boolean shouldFreezePosition(BlockPos worldPosition) {
-		Vec3 cameraPosition = getCameraPosition();
+		var cameraPosition = getCameraPosition();
+
 		if (cameraPosition == null) {
 			return false;
 		}
 
-		return shouldFreezePosition(worldPosition, (int) cameraPosition.x, (int) cameraPosition.y, (int) cameraPosition.z);
+		return shouldFreezeAtPosition(worldPosition, (int) cameraPosition.x, (int) cameraPosition.y, (int) cameraPosition.z);
 	}
 
 	public static boolean isPositionOccluded(BlockPos position) {
@@ -85,11 +83,13 @@ public final class FreezeConditionUtil {
 
 	private static Vec3 getCameraPosition() {
 		var client = Minecraft.getInstance();
+
 		if (client == null || client.gameRenderer == null) {
 			return null;
 		}
 
 		var camera = client.gameRenderer.getMainCamera();
+
 		if (camera == null) {
 			return null;
 		}
