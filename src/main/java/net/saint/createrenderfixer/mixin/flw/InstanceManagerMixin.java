@@ -1,18 +1,17 @@
 package net.saint.createrenderfixer.mixin.flw;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.jozufozu.flywheel.api.instance.DynamicInstance;
 import com.jozufozu.flywheel.backend.instancing.InstanceManager;
-import com.jozufozu.flywheel.backend.instancing.blockentity.BlockEntityInstance;
+import com.jozufozu.flywheel.backend.instancing.ratelimit.DistanceUpdateLimiter;
 
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.saint.createrenderfixer.FreezeConditionUtil;
-import net.saint.createrenderfixer.ModConfig;
-import net.saint.createrenderfixer.mixin.BlockEntityInstanceAccessor;
+import net.saint.createrenderfixer.Mod;
 
 /**
  * Freezes dynamic instances beyond a configurable distance to avoid large batched buffer updates.
@@ -20,22 +19,47 @@ import net.saint.createrenderfixer.mixin.BlockEntityInstanceAccessor;
 @Mixin(value = InstanceManager.class, remap = false)
 public abstract class InstanceManagerMixin {
 
+	@Shadow
+	protected DistanceUpdateLimiter frame;
+
 	@Inject(method = "updateInstance", at = @At("HEAD"), cancellable = true)
 	private void crf$updateInstance(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY, int cZ,
 			CallbackInfo callbackInfo) {
-		if (dynamicInstance instanceof BlockEntityInstance<?> blockEntityInstance) {
-			var blockEntity = ((BlockEntityInstanceAccessor<BlockEntity>) blockEntityInstance).getBlockEntity();
+		if (!shouldAllowUpdateInstance(dynamicInstance, lookX, lookY, lookZ, cX, cY, cZ)) {
+			callbackInfo.cancel();
+			return;
+		}
 
-			if (blockEntity != null && ModConfig.isFreezeBlacklisted(blockEntity.getType())) {
-				return;
-			}
+		if (!dynamicInstance.decreaseFramerateWithDistance()) {
+			dynamicInstance.beginFrame();
+			callbackInfo.cancel();
+			return;
+		}
+
+		var worldPos = dynamicInstance.getWorldPosition();
+		var dX = worldPos.getX() - cX;
+		var dY = worldPos.getY() - cY;
+		var dZ = worldPos.getZ() - cZ;
+
+		if (frame.shouldUpdate(dX, dY, dZ)) {
+			dynamicInstance.beginFrame();
+		}
+
+		callbackInfo.cancel();
+	}
+
+	private boolean shouldAllowUpdateInstance(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY,
+			int cZ) {
+		if (Mod.isInstanceBlacklisted(dynamicInstance)) {
+			return true;
 		}
 
 		var position = dynamicInstance.getWorldPosition();
 
-		if (FreezeConditionUtil.shouldFreezePosition(position, cX, cY, cZ)) {
-			callbackInfo.cancel();
-			return;
+		if (FreezeConditionUtil.shouldFreezeAtPosition(position, cX, cY, cZ)) {
+			return false;
 		}
+
+		return true;
 	}
 }
