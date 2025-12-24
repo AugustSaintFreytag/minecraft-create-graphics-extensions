@@ -10,8 +10,8 @@ import com.jozufozu.flywheel.api.instance.DynamicInstance;
 import com.jozufozu.flywheel.backend.instancing.InstanceManager;
 import com.jozufozu.flywheel.backend.instancing.ratelimit.DistanceUpdateLimiter;
 
-import net.saint.createrenderfixer.FreezeConditionUtil;
 import net.saint.createrenderfixer.Mod;
+import net.saint.createrenderfixer.utils.FreezeConditionUtil;
 
 /**
  * Freezes dynamic instances beyond a configurable distance to avoid large batched buffer updates.
