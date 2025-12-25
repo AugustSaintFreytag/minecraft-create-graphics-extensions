@@ -44,9 +44,9 @@ public final class ContraptionPersistencyUtil {
 			Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> data = decode(
 					server.registryAccess().lookupOrThrow(Registries.BLOCK), root);
 			ContraptionBlockRegistry.loadPersistent(data);
-			Mod.LOGGER.info("Loaded {} contraption chunks for DH overrides", countEntries(data));
+			Mod.LOGGER.info("Loaded {} contraption chunks for DH overrides from file.", countEntries(data));
 		} catch (Exception exception) {
-			Mod.LOGGER.warn("Failed to load contraption persistence data", exception);
+			Mod.LOGGER.warn("Could not load contraption persistence data from file.", exception);
 		}
 	}
 
@@ -68,7 +68,7 @@ public final class ContraptionPersistencyUtil {
 
 			NbtIo.writeCompressed(tag, savePath.toFile());
 		} catch (Exception exception) {
-			Mod.LOGGER.error("Could not save contraption persistence data.", exception);
+			Mod.LOGGER.error("Could not save contraption persistence data to file.", exception);
 		}
 	}
 
