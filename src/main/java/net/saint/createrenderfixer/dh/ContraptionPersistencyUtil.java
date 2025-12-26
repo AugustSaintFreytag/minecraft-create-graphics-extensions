@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -40,11 +42,15 @@ public final class ContraptionPersistencyUtil {
 		}
 
 		try {
-			CompoundTag root = NbtIo.readCompressed(savePath.toFile());
-			Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> data = decode(
-					server.registryAccess().lookupOrThrow(Registries.BLOCK), root);
-			ContraptionBlockRegistry.loadPersistent(data);
-			Mod.LOGGER.info("Loaded {} contraption chunks for DH overrides from file.", countEntries(data));
+			var root = NbtIo.readCompressed(savePath.toFile());
+			var data = decode(server.registryAccess().lookupOrThrow(Registries.BLOCK), root);
+			ContraptionBlockRegistry.loadPersistent(data.chunkData());
+			WindmillLODManager.loadPersistent(data.windmills());
+
+			var blockCount = countEntries(data.chunkData());
+			var windmillCount = data.windmills().size();
+
+			Mod.LOGGER.info("Loaded {} contraption blocks and {} windmill entries for DH overrides from file.", blockCount, windmillCount);
 		} catch (Exception exception) {
 			Mod.LOGGER.warn("Could not load contraption persistence data from file.", exception);
 		}
@@ -64,7 +70,8 @@ public final class ContraptionPersistencyUtil {
 			Files.createDirectories(savePath.getParent());
 
 			var snapshot = ContraptionBlockRegistry.snapshot();
-			var tag = encode(snapshot);
+			var windmills = WindmillLODManager.snapshotPersistent();
+			var tag = encode(snapshot, windmills);
 
 			NbtIo.writeCompressed(tag, savePath.toFile());
 		} catch (Exception exception) {
@@ -78,7 +85,8 @@ public final class ContraptionPersistencyUtil {
 
 	// Encoding
 
-	private static CompoundTag encode(Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> data) {
+	private static CompoundTag encode(Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> data,
+			List<WindmillLODEntry> windmills) {
 		var root = new CompoundTag();
 		var dimensions = new ListTag();
 
@@ -115,16 +123,55 @@ public final class ContraptionPersistencyUtil {
 		});
 
 		root.put("dims", dimensions);
+		root.put("windmills", encodeWindmills(windmills));
+
 		return root;
+	}
+
+	private static ListTag encodeWindmills(List<WindmillLODEntry> windmills) {
+		var list = new ListTag();
+
+		if (windmills == null || windmills.isEmpty()) {
+			return list;
+		}
+
+		for (var entry : windmills) {
+			if (entry == null) {
+				continue;
+			}
+
+			var contraptionIdentifier = entry.contraptionId();
+			var dimensionIdentifier = entry.dimensionId();
+			var anchorPosition = entry.anchorPosition();
+			var rotationAxis = entry.rotationAxis();
+
+			if (contraptionIdentifier == null || dimensionIdentifier == null || anchorPosition == null || rotationAxis == null) {
+				continue;
+			}
+
+			var windmillTag = new CompoundTag();
+			windmillTag.putString("identifier", contraptionIdentifier.toString());
+			windmillTag.putString("dimension", dimensionIdentifier);
+			windmillTag.put("anchor", NbtUtils.writeBlockPos(anchorPosition));
+			windmillTag.putString("axis", rotationAxis.getName());
+			windmillTag.putFloat("speed", entry.rotationSpeed());
+			windmillTag.putFloat("angle", entry.rotationAngle());
+			windmillTag.putLong("lastSynchronizationTick", entry.lastSynchronizationTick());
+			list.add(windmillTag);
+		}
+
+		return list;
 	}
 
 	// Decoding
 
-	private static Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> decode(HolderGetter<Block> blocks, @Nullable
+	private static PersistedData decode(HolderGetter<Block> blocks, @Nullable
 	CompoundTag root) throws IOException {
-		Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> data = new HashMap<>();
+		var data = new HashMap<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>>();
+		var windmills = decodeWindmills(root);
+
 		if (root == null || !root.contains("dims", Tag.TAG_LIST)) {
-			return data;
+			return new PersistedData(data, windmills);
 		}
 
 		for (Tag dimTagRaw : root.getList("dims", Tag.TAG_COMPOUND)) {
@@ -167,7 +214,78 @@ public final class ContraptionPersistencyUtil {
 			}
 		}
 
-		return data;
+		return new PersistedData(data, windmills);
+	}
+
+	private static List<WindmillLODEntry> decodeWindmills(@Nullable
+	CompoundTag root) {
+		var entries = new ArrayList<WindmillLODEntry>();
+
+		if (root == null || !root.contains("windmills", Tag.TAG_LIST)) {
+			return entries;
+		}
+
+		for (Tag entryRaw : root.getList("windmills", Tag.TAG_COMPOUND)) {
+			if (!(entryRaw instanceof CompoundTag entryTag)) {
+				continue;
+			}
+
+			var identifierValue = resolveIdentifier(entryTag);
+			var dimensionIdentifier = entryTag.getString("dimension");
+
+			if (identifierValue.isBlank() || dimensionIdentifier.isBlank()) {
+				continue;
+			}
+
+			if (!entryTag.contains("anchor", Tag.TAG_COMPOUND)) {
+				continue;
+			}
+
+			var anchorPosition = NbtUtils.readBlockPos(entryTag.getCompound("anchor"));
+			var axis = resolveAxis(entryTag.getString("axis"));
+			var rotationSpeed = entryTag.getFloat("speed");
+			var rotationAngle = entryTag.getFloat("angle");
+			var lastSynchronizationTick = resolveSynchronizationTick(entryTag);
+
+			try {
+				var contraptionIdentifier = UUID.fromString(identifierValue);
+				var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, anchorPosition, axis, rotationSpeed,
+						rotationAngle, lastSynchronizationTick);
+				entries.add(entry);
+			} catch (IllegalArgumentException ignored) {
+				// Skip invalid entry identifiers.
+			}
+		}
+
+		return entries;
+	}
+
+	private static String resolveIdentifier(CompoundTag entryTag) {
+		var identifierValue = entryTag.getString("identifier");
+
+		if (!identifierValue.isBlank()) {
+			return identifierValue;
+		}
+
+		return entryTag.getString("id");
+	}
+
+	private static long resolveSynchronizationTick(CompoundTag entryTag) {
+		if (entryTag.contains("lastSynchronizationTick", Tag.TAG_LONG)) {
+			return entryTag.getLong("lastSynchronizationTick");
+		}
+
+		return entryTag.getLong("lastSyncTick");
+	}
+
+	private static Direction.Axis resolveAxis(String axisName) {
+		var axis = Direction.Axis.byName(axisName);
+
+		if (axis == null) {
+			return Direction.Axis.Y;
+		}
+
+		return axis;
 	}
 
 	private static int countEntries(Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> data) {
@@ -180,5 +298,9 @@ public final class ContraptionPersistencyUtil {
 		}
 
 		return count;
+	}
+
+	private record PersistedData(Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> chunkData,
+			List<WindmillLODEntry> windmills) {
 	}
 }

@@ -13,6 +13,8 @@ import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiChunkModifiedEvent;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
+import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
+import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -21,6 +23,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.saint.createrenderfixer.Mod;
+import net.saint.createrenderfixer.mixin.create.ControlledContraptionEntityAccessor;
 
 /**
  * Thread-safe registry of contraption blocks keyed by dimension + chunk for DH overrides.
@@ -121,6 +124,7 @@ public final class ContraptionBlockRegistry {
 		}
 
 		notifyChunksDirty(dimensionIdentifier, entry.chunks.keySet());
+		registerWindmillEntry(entity, serverLevel, dimensionIdentifier);
 	}
 
 	public static void unregister(UUID contraptionId) {
@@ -151,11 +155,13 @@ public final class ContraptionBlockRegistry {
 		}
 
 		notifyChunksDirty(removed.dimensionId, removed.chunks.keySet());
+		WindmillLODManager.unregister(contraptionId);
 	}
 
 	public static void clearForWorld(String dimensionId) {
 		BY_DIMENSION.remove(dimensionId);
 		CONTRAPTIONS.entrySet().removeIf(e -> e.getValue().dimensionId.equals(dimensionId));
+		WindmillLODManager.clearForWorld(dimensionId);
 	}
 
 	@Nullable
@@ -279,6 +285,48 @@ public final class ContraptionBlockRegistry {
 	}
 
 	// Utility
+
+	private static void registerWindmillEntry(AbstractContraptionEntity entity, ServerLevel serverLevel, String dimensionIdentifier) {
+		if (!(entity instanceof ControlledContraptionEntity controlledContraption)) {
+			return;
+		}
+
+		if (!(controlledContraption instanceof ControlledContraptionEntityAccessor accessor)) {
+			return;
+		}
+
+		var controllerPosition = accessor.getControllerPosition();
+
+		if (controllerPosition == null) {
+			return;
+		}
+
+		var blockEntity = serverLevel.getBlockEntity(controllerPosition);
+
+		if (!(blockEntity instanceof WindmillBearingBlockEntity windmillBearing)) {
+			return;
+		}
+
+		var rotationAxis = controlledContraption.getRotationAxis();
+
+		if (rotationAxis == null) {
+			return;
+		}
+
+		var contraptionIdentifier = entity.getUUID();
+
+		if (WindmillLODManager.find(contraptionIdentifier) != null) {
+			return;
+		}
+
+		var rotationSpeed = windmillBearing.getAngularSpeed();
+		var rotationAngle = windmillBearing.getInterpolatedAngle(1.0F);
+		var lastSynchronizationTick = serverLevel.getGameTime();
+		var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, controllerPosition, rotationAxis, rotationSpeed,
+				rotationAngle, lastSynchronizationTick);
+
+		WindmillLODManager.register(entry);
+	}
 
 	@Nullable
 	private static Map<Long, List<BlockPosState>> resolveChunkMap(String dimensionId) {
