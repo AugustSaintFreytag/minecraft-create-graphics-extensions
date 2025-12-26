@@ -5,6 +5,7 @@
 	"plugin": "net.saint.createrenderfixer.ModMixinPlugin",
 	"mixins": [
 		"create.AbstractContraptionEntityMixin",
+		"create.ControlledContraptionEntityAccessor",
 		"dh.AbstractDhLevelMixin",
 		"dh.DhLodDataBuilderMixin"
 	],
