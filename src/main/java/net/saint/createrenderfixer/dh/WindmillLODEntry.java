@@ -97,6 +97,36 @@ public final class WindmillLODEntry {
 		this.renderGroupId = renderGroupId;
 	}
 
+	// Comparison
+
+	public boolean matchesRegistrationData(WindmillLODEntry other) {
+		if (other == null) {
+			return false;
+		}
+
+		if (!dimensionId.equals(other.dimensionId())) {
+			return false;
+		}
+
+		if (!anchorPosition.equals(other.anchorPosition())) {
+			return false;
+		}
+
+		if (rotationAxis != other.rotationAxis()) {
+			return false;
+		}
+
+		if (planeWidth != other.planeWidth()) {
+			return false;
+		}
+
+		if (planeHeight != other.planeHeight()) {
+			return false;
+		}
+
+		return true;
+	}
+
 	// Persistence
 
 	public WindmillLODEntry createPersistenceSnapshot() {

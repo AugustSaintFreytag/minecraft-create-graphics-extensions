@@ -29,9 +29,7 @@ public final class WindmillLODManager {
 
 		var existing = ENTRIES.get(entry.contraptionId());
 		if (existing != null) {
-			if (existing.dimensionId().equals(entry.dimensionId()) && existing.anchorPosition().equals(entry.anchorPosition())
-					&& existing.rotationAxis() == entry.rotationAxis() && existing.planeWidth() == entry.planeWidth()
-					&& existing.planeHeight() == entry.planeHeight()) {
+			if (existing.matchesRegistrationData(entry)) {
 
 				existing.setRotationSpeed(entry.rotationSpeed());
 				existing.setRotationAngle(entry.rotationAngle());
