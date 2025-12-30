@@ -14,6 +14,12 @@ public final class WindmillLODManager {
 
 	private static final Map<UUID, WindmillLODEntry> ENTRIES = new ConcurrentHashMap<>();
 
+	// Access
+
+	public static Iterable<WindmillLODEntry> entries() {
+		return ENTRIES.values();
+	}
+
 	// Registration
 
 	public static void register(WindmillLODEntry entry) {
@@ -21,15 +27,28 @@ public final class WindmillLODManager {
 			return;
 		}
 
+		var existing = ENTRIES.get(entry.contraptionId());
+		if (existing != null) {
+			if (existing.dimensionId().equals(entry.dimensionId()) && existing.anchorPosition().equals(entry.anchorPosition())
+					&& existing.rotationAxis() == entry.rotationAxis() && existing.planeWidth() == entry.planeWidth()
+					&& existing.planeHeight() == entry.planeHeight()) {
+
+				existing.setRotationSpeed(entry.rotationSpeed());
+				existing.setRotationAngle(entry.rotationAngle());
+				existing.setLastSynchronizationTick(entry.lastSynchronizationTick());
+				return;
+			}
+		}
+
 		ENTRIES.put(entry.contraptionId(), entry);
 	}
 
-	public static void unregister(UUID contraptionId) {
+	public static boolean unregister(UUID contraptionId) {
 		if (contraptionId == null) {
-			return;
+			return false;
 		}
 
-		ENTRIES.remove(contraptionId);
+		return ENTRIES.remove(contraptionId) != null;
 	}
 
 	public static void clearForWorld(String dimensionId) {
