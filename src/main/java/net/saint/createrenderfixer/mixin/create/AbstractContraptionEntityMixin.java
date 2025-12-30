@@ -31,6 +31,10 @@ public abstract class AbstractContraptionEntityMixin {
 			return;
 		}
 
+		if (reason == Entity.RemovalReason.UNLOADED_TO_CHUNK) {
+			return;
+		}
+
 		var contraption = (AbstractContraptionEntity) (Object) this;
 		ContraptionBlockRegistry.unregister(contraption);
 	}
