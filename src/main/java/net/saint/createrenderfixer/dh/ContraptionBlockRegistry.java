@@ -23,6 +23,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.saint.createrenderfixer.Mod;
 import net.saint.createrenderfixer.mixin.create.ControlledContraptionEntityAccessor;
@@ -77,7 +78,7 @@ public final class ContraptionBlockRegistry {
 	}
 
 	private record WindmillRegistrationData(BlockPos controllerPosition, WindmillBearingBlockEntity windmillBearing,
-			Direction.Axis rotationAxis, AABB bounds) {
+			Direction.Axis rotationAxis, Direction bearingDirection, AABB bounds) {
 	}
 
 	// State
@@ -297,9 +298,10 @@ public final class ContraptionBlockRegistry {
 		var rotationSpeed = windmillData.windmillBearing().getAngularSpeed();
 		var rotationAngle = windmillData.windmillBearing().getInterpolatedAngle(1.0F);
 		var lastSynchronizationTick = serverLevel.getGameTime();
+		var bearingDirection = windmillData.bearingDirection();
 		var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, windmillData.controllerPosition(),
-				windmillData.rotationAxis(), planeSize.width(), planeSize.height(), rotationSpeed, rotationAngle,
-				lastSynchronizationTick);
+				windmillData.rotationAxis(), bearingDirection, planeSize.width(), planeSize.height(), rotationSpeed,
+				rotationAngle, lastSynchronizationTick);
 
 		WindmillLODManager.register(entry);
 		WindmillLODSyncUtil.broadcastUpdatePacket(serverLevel.getServer(), entry);
@@ -434,7 +436,25 @@ public final class ContraptionBlockRegistry {
 			return null;
 		}
 
-		return new WindmillRegistrationData(controllerPosition, windmillBearing, rotationAxis, bounds);
+		var bearingDirection = resolveBearingDirection(windmillBearing, rotationAxis);
+
+		return new WindmillRegistrationData(controllerPosition, windmillBearing, rotationAxis, bearingDirection, bounds);
+	}
+
+	private static Direction resolveBearingDirection(WindmillBearingBlockEntity windmillBearing, Direction.Axis rotationAxis) {
+		if (windmillBearing != null) {
+			var blockState = windmillBearing.getBlockState();
+
+			if (blockState.hasProperty(BlockStateProperties.FACING)) {
+				return blockState.getValue(BlockStateProperties.FACING);
+			}
+
+			if (blockState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+				return blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+			}
+		}
+
+		return Direction.fromAxisAndDirection(rotationAxis, Direction.AxisDirection.POSITIVE);
 	}
 
 	@Nullable

@@ -159,8 +159,10 @@ public final class CreateLodPersistentData extends SavedData {
 			var dimensionIdentifier = entry.dimensionId();
 			var anchorPosition = entry.anchorPosition();
 			var rotationAxis = entry.rotationAxis();
+			var bearingDirection = entry.bearingDirection();
 
-			if (contraptionIdentifier == null || dimensionIdentifier == null || anchorPosition == null || rotationAxis == null) {
+			if (contraptionIdentifier == null || dimensionIdentifier == null || anchorPosition == null || rotationAxis == null
+					|| bearingDirection == null) {
 				continue;
 			}
 
@@ -169,6 +171,7 @@ public final class CreateLodPersistentData extends SavedData {
 			windmillTag.putString("dimension", dimensionIdentifier);
 			windmillTag.put("anchor", NbtUtils.writeBlockPos(anchorPosition));
 			windmillTag.putString("axis", rotationAxis.getName());
+			windmillTag.putString("bearingDirection", bearingDirection.getName());
 			windmillTag.putFloat("planeWidth", entry.planeWidth());
 			windmillTag.putFloat("planeHeight", entry.planeHeight());
 			windmillTag.putFloat("speed", entry.rotationSpeed());
@@ -258,6 +261,7 @@ public final class CreateLodPersistentData extends SavedData {
 
 			var anchorPosition = NbtUtils.readBlockPos(entryTag.getCompound("anchor"));
 			var axis = resolveAxis(entryTag.getString("axis"));
+			var bearingDirection = resolveBearingDirection(entryTag, axis);
 			var planeWidth = 1.0F;
 
 			if (entryTag.contains("planeWidth", Tag.TAG_FLOAT)) {
@@ -276,8 +280,8 @@ public final class CreateLodPersistentData extends SavedData {
 
 			try {
 				var contraptionIdentifier = UUID.fromString(identifierValue);
-				var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, anchorPosition, axis, planeWidth, planeHeight,
-						rotationSpeed, rotationAngle, lastSynchronizationTick);
+				var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, anchorPosition, axis, bearingDirection,
+						planeWidth, planeHeight, rotationSpeed, rotationAngle, lastSynchronizationTick);
 				entries.add(entry);
 			} catch (IllegalArgumentException ignored) {
 				// Skip invalid entry identifiers.
@@ -313,6 +317,19 @@ public final class CreateLodPersistentData extends SavedData {
 		}
 
 		return axis;
+	}
+
+	private static Direction resolveBearingDirection(CompoundTag entryTag, Direction.Axis rotationAxis) {
+		if (entryTag.contains("bearingDirection", Tag.TAG_STRING)) {
+			var directionName = entryTag.getString("bearingDirection");
+			var direction = Direction.byName(directionName);
+
+			if (direction != null) {
+				return direction;
+			}
+		}
+
+		return Direction.fromAxisAndDirection(rotationAxis, Direction.AxisDirection.POSITIVE);
 	}
 
 	// Utility
