@@ -51,7 +51,7 @@ public final class WindmillLODSyncUtil {
 
 			client.execute(() -> {
 				WindmillLODManager.register(entry);
-				Mod.LOGGER.debug("Applied windmill LOD update for contraption {}.", entry.contraptionId());
+				Mod.LOGGER.debug("Applied windmill LOD update for contraption '{}'.", entry.contraptionId);
 			});
 		});
 
@@ -155,16 +155,16 @@ public final class WindmillLODSyncUtil {
 	}
 
 	private static void writeEntry(FriendlyByteBuf buffer, WindmillLODEntry entry) {
-		buffer.writeUUID(entry.contraptionId());
-		buffer.writeUtf(entry.dimensionId());
-		buffer.writeBlockPos(entry.anchorPosition());
-		buffer.writeEnum(entry.rotationAxis());
-		buffer.writeEnum(entry.bearingDirection());
-		buffer.writeFloat(entry.planeWidth());
-		buffer.writeFloat(entry.planeHeight());
-		buffer.writeFloat(entry.rotationSpeed());
-		buffer.writeFloat(entry.rotationAngle());
-		buffer.writeLong(entry.lastSynchronizationTick());
+		buffer.writeUUID(entry.contraptionId);
+		buffer.writeUtf(entry.dimensionId);
+		buffer.writeBlockPos(entry.anchorPosition);
+		buffer.writeEnum(entry.rotationAxis);
+		buffer.writeEnum(entry.bearingDirection);
+		buffer.writeFloat(entry.planeWidth);
+		buffer.writeFloat(entry.planeHeight);
+		buffer.writeFloat(entry.rotationSpeed);
+		buffer.writeFloat(entry.rotationAngle);
+		buffer.writeLong(entry.lastSynchronizationTick);
 	}
 
 	private static ArrayList<WindmillLODEntry> collectEntries() {

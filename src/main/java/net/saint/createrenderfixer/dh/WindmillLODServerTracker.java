@@ -40,7 +40,7 @@ public final class WindmillLODServerTracker {
 		var dimensionId = level.dimension().location().toString();
 
 		for (var entry : WindmillLODManager.entries()) {
-			if (!dimensionId.equals(entry.dimensionId())) {
+			if (!dimensionId.equals(entry.dimensionId)) {
 				continue;
 			}
 
@@ -52,7 +52,7 @@ public final class WindmillLODServerTracker {
 		var predictedAngle = getPredictedRotationAngleForEntry(entry, currentTick);
 
 		if (!isChunkLoadedForEntry(level, entry)) {
-			entry.setStale(true);
+			entry.isStale = true;
 			updateEntryForNonTickingChunk(server, level, entry, predictedAngle, currentTick);
 
 			return;
@@ -66,10 +66,10 @@ public final class WindmillLODServerTracker {
 
 		var rotationSpeed = windmillBearing.getAngularSpeed();
 
-		if (entry.isStale()) {
+		if (entry.isStale) {
 			logRotationDisconnectIfNeeded(entry, windmillBearing.getInterpolatedAngle(1.0F), predictedAngle, "STALE_ENTRY");
 			applyPredictedRotationToBearing(windmillBearing, entry, predictedAngle, "STALE_ENTRY");
-			entry.setStale(false);
+			entry.isStale = false;
 			synchronizeEntry(server, entry, rotationSpeed, predictedAngle, currentTick);
 
 			return;
@@ -95,7 +95,7 @@ public final class WindmillLODServerTracker {
 			applyPredictedRotationToBearing(windmillBearing, entry, predictedAngle, "NON_TICKING_ENTRY");
 		}
 
-		var rotationSpeed = entry.rotationSpeed();
+		var rotationSpeed = entry.rotationSpeed;
 
 		if (!shouldSynchronizeEntry(entry, rotationSpeed, predictedAngle)) {
 			return;
@@ -105,8 +105,8 @@ public final class WindmillLODServerTracker {
 	}
 
 	private static float getPredictedRotationAngleForEntry(WindmillLODEntry entry, long currentTick) {
-		var tickDelta = currentTick - entry.lastSynchronizationTick();
-		var predictedAngle = entry.rotationAngle() + entry.rotationSpeed() * tickDelta;
+		var tickDelta = currentTick - entry.lastSynchronizationTick;
+		var predictedAngle = entry.rotationAngle + entry.rotationSpeed * tickDelta;
 
 		return wrapDegrees(predictedAngle);
 	}
@@ -132,21 +132,21 @@ public final class WindmillLODServerTracker {
 		}
 
 		Mod.LOGGER.info("Overwrote windmill bearing angle from '{}' to '{}' for contraption '{}' due to '{}'.", previousAngle,
-				rotationAngle, entry.contraptionId(), reason);
+				rotationAngle, entry.contraptionId, reason);
 	}
 
 	private static void synchronizeEntry(MinecraftServer server, WindmillLODEntry entry, float rotationSpeed, float rotationAngle,
 			long currentTick) {
-		entry.setRotationSpeed(rotationSpeed);
-		entry.setRotationAngle(rotationAngle);
-		entry.setLastSynchronizationTick(currentTick);
+		entry.rotationSpeed = rotationSpeed;
+		entry.rotationAngle = rotationAngle;
+		entry.lastSynchronizationTick = currentTick;
 
 		WindmillLODSyncUtil.broadcastUpdatePacket(server, entry);
 	}
 
 	private static boolean shouldSynchronizeEntry(WindmillLODEntry entry, float rotationSpeed, float rotationAngle) {
-		var speedDelta = Math.abs(rotationSpeed - entry.rotationSpeed());
-		var angleDelta = getRotationDeltaForAngles(rotationAngle, entry.rotationAngle());
+		var speedDelta = Math.abs(rotationSpeed - entry.rotationSpeed);
+		var angleDelta = getRotationDeltaForAngles(rotationAngle, entry.rotationAngle);
 
 		if (speedDelta < SPEED_SYNC_THRESHOLD && angleDelta < ROTATION_SYNC_THRESHOLD) {
 			return false;
@@ -166,8 +166,8 @@ public final class WindmillLODServerTracker {
 			return;
 		}
 
-		Mod.LOGGER.warn("Detected a windmill rotation disconnect of '{}' degrees for contraption '{}' while {}.", rotationDelta,
-				entry.contraptionId(), reason);
+		Mod.LOGGER.warn("Detected a windmill rotation disconnect of '{}' degrees for contraption '{}' while '{}'.", rotationDelta,
+				entry.contraptionId, reason);
 	}
 
 	private static float getRotationDeltaForAngles(float previousAngle, float nextAngle) {
@@ -206,7 +206,7 @@ public final class WindmillLODServerTracker {
 			return false;
 		}
 
-		if (!level.isPositionEntityTicking(entry.anchorPosition())) {
+		if (!level.isPositionEntityTicking(entry.anchorPosition)) {
 			return false;
 		}
 
@@ -222,7 +222,7 @@ public final class WindmillLODServerTracker {
 			return null;
 		}
 
-		var blockEntity = level.getBlockEntity(entry.anchorPosition());
+		var blockEntity = level.getBlockEntity(entry.anchorPosition);
 
 		if (!(blockEntity instanceof WindmillBearingBlockEntity windmillBearing)) {
 			return null;
@@ -247,7 +247,7 @@ public final class WindmillLODServerTracker {
 	}
 
 	private static ChunkPos getChunkPositionForEntryAnchor(WindmillLODEntry entry) {
-		var anchorPosition = entry.anchorPosition();
+		var anchorPosition = entry.anchorPosition;
 		var chunkX = anchorPosition.getX() >> 4;
 		var chunkZ = anchorPosition.getZ() >> 4;
 

@@ -27,18 +27,19 @@ public final class WindmillLODManager {
 			return;
 		}
 
-		var existing = ENTRIES.get(entry.contraptionId());
+		var existing = ENTRIES.get(entry.contraptionId);
 		if (existing != null) {
 			if (existing.matchesRegistrationData(entry)) {
 
-				existing.setRotationSpeed(entry.rotationSpeed());
-				existing.setRotationAngle(entry.rotationAngle());
-				existing.setLastSynchronizationTick(entry.lastSynchronizationTick());
+				existing.rotationSpeed = entry.rotationSpeed;
+				existing.rotationAngle = entry.rotationAngle;
+				existing.lastSynchronizationTick = entry.lastSynchronizationTick;
+
 				return;
 			}
 		}
 
-		ENTRIES.put(entry.contraptionId(), entry);
+		ENTRIES.put(entry.contraptionId, entry);
 	}
 
 	public static boolean unregister(UUID contraptionId) {
@@ -54,7 +55,7 @@ public final class WindmillLODManager {
 			return;
 		}
 
-		ENTRIES.entrySet().removeIf(entry -> dimensionId.equals(entry.getValue().dimensionId()));
+		ENTRIES.entrySet().removeIf(entry -> dimensionId.equals(entry.getValue().dimensionId));
 	}
 
 	@Nullable
@@ -90,7 +91,7 @@ public final class WindmillLODManager {
 				continue;
 			}
 
-			ENTRIES.put(entry.contraptionId(), entry);
+			ENTRIES.put(entry.contraptionId, entry);
 		}
 	}
 }

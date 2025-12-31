@@ -87,7 +87,7 @@ public final class WindmillLODRenderManager {
 		var activeIdentifiers = new HashSet<UUID>();
 
 		for (var entry : WindmillLODManager.entries()) {
-			if (!dimensionId.equals(entry.dimensionId())) {
+			if (!dimensionId.equals(entry.dimensionId)) {
 				continue;
 			}
 
@@ -98,7 +98,7 @@ public final class WindmillLODRenderManager {
 				continue;
 			}
 
-			activeIdentifiers.add(entry.contraptionId());
+			activeIdentifiers.add(entry.contraptionId);
 
 			var renderGroup = ensureRenderGroup(renderFactory, renderRegister, entry);
 
@@ -115,25 +115,25 @@ public final class WindmillLODRenderManager {
 	@Nullable
 	private static IDhApiRenderableBoxGroup ensureRenderGroup(IDhApiCustomRenderObjectFactory renderFactory,
 			IDhApiCustomRenderRegister renderRegister, WindmillLODEntry entry) {
-		var renderGroup = RENDER_GROUPS.get(entry.contraptionId());
+		var renderGroup = RENDER_GROUPS.get(entry.contraptionId);
 
 		if (renderGroup != null) {
-			entry.setRenderGroupId(renderGroup.getId());
+			entry.renderGroupId = renderGroup.getId();
 
 			return renderGroup;
 		}
 
-		var resourceLocation = Mod.MOD_ID + ":windmill/" + entry.contraptionId();
+		var resourceLocation = Mod.MOD_ID + ":windmill/" + entry.contraptionId;
 		var originPosition = toOrigin(getRenderAnchorPositionForEntry(entry));
-		var crossBoxes = getWindmillCrossBoxesForEntry(entry, getEffectiveRotationAngle(entry.rotationAngle()));
+		var crossBoxes = getWindmillCrossBoxesForEntry(entry, getEffectiveRotationAngle(entry.rotationAngle));
 
 		try {
 			renderGroup = renderFactory.createRelativePositionedGroup(resourceLocation, originPosition, crossBoxes);
 			renderGroup.setOriginBlockPos(originPosition);
 
 			renderRegister.add(renderGroup);
-			entry.setRenderGroupId(renderGroup.getId());
-			RENDER_GROUPS.put(entry.contraptionId(), renderGroup);
+			entry.renderGroupId = renderGroup.getId();
+			RENDER_GROUPS.put(entry.contraptionId, renderGroup);
 		} catch (IllegalArgumentException exception) {
 			Mod.LOGGER.warn("Failed to register windmill render group '{}'.", resourceLocation, exception);
 
@@ -147,7 +147,7 @@ public final class WindmillLODRenderManager {
 		var originPosition = toOrigin(getRenderAnchorPositionForEntry(entry));
 		renderGroup.setOriginBlockPos(originPosition);
 
-		var lastAngle = LAST_RENDER_ANGLES.get(entry.contraptionId());
+		var lastAngle = LAST_RENDER_ANGLES.get(entry.contraptionId);
 
 		if (lastAngle != null) {
 			var rotationDelta = getRotationDeltaForAngles(lastAngle, renderAngle);
@@ -158,7 +158,7 @@ public final class WindmillLODRenderManager {
 		}
 
 		updateRenderGroupBoxes(renderGroup, entry, renderAngle);
-		LAST_RENDER_ANGLES.put(entry.contraptionId(), renderAngle);
+		LAST_RENDER_ANGLES.put(entry.contraptionId, renderAngle);
 	}
 
 	private static void removeStaleRenderGroups(HashSet<UUID> activeIdentifiers, IDhApiCustomRenderRegister renderRegister) {
@@ -192,14 +192,14 @@ public final class WindmillLODRenderManager {
 		var bladeLengths = getBladeLengthsForEntry(entry);
 		var bladeThickness = getBladeThicknessForEntry(entry);
 		var thicknessScale = getThicknessScaleForRotationAngle(rotationAngle);
-		var baseBoxes = getCrossBoxesForAxis(entry.rotationAxis(), bladeLengths, bladeThickness, thicknessScale);
+		var baseBoxes = getCrossBoxesForAxis(entry.rotationAxis, bladeLengths, bladeThickness, thicknessScale);
 
-		return rotateBoxesForAxis(baseBoxes, entry.rotationAxis(), rotationAngle);
+		return rotateBoxesForAxis(baseBoxes, entry.rotationAxis, rotationAngle);
 	}
 
 	private static BladeLengths getBladeLengthsForEntry(WindmillLODEntry entry) {
-		var widthLength = getBladeLengthForPlane(entry.planeWidth());
-		var heightLength = getBladeLengthForPlane(entry.planeHeight());
+		var widthLength = getBladeLengthForPlane(entry.planeWidth);
+		var heightLength = getBladeLengthForPlane(entry.planeHeight);
 
 		return new BladeLengths(widthLength, heightLength);
 	}
@@ -215,7 +215,7 @@ public final class WindmillLODRenderManager {
 	}
 
 	private static float getBladeThicknessForEntry(WindmillLODEntry entry) {
-		var minPlaneSize = Math.min(entry.planeWidth(), entry.planeHeight());
+		var minPlaneSize = Math.min(entry.planeWidth, entry.planeHeight);
 		var bladeThickness = minPlaneSize * BLADE_THICKNESS_SCALE;
 
 		if (bladeThickness < MIN_BLADE_THICKNESS) {
@@ -433,13 +433,13 @@ public final class WindmillLODRenderManager {
 	}
 
 	private static BlockPos getRenderAnchorPositionForEntry(WindmillLODEntry entry) {
-		var bearingDirection = entry.bearingDirection();
+		var bearingDirection = entry.bearingDirection;
 
 		if (bearingDirection == null) {
-			return entry.anchorPosition();
+			return entry.anchorPosition;
 		}
 
-		return entry.anchorPosition().relative(bearingDirection);
+		return entry.anchorPosition.relative(bearingDirection);
 	}
 
 	private static String getDimensionIdForLevel(ClientLevel level) {
@@ -474,7 +474,7 @@ public final class WindmillLODRenderManager {
 	}
 
 	private static boolean isChunkLoadedForEntry(ClientLevel level, WindmillLODEntry entry) {
-		var anchorPosition = entry.anchorPosition();
+		var anchorPosition = entry.anchorPosition;
 		var chunkX = anchorPosition.getX() >> 4;
 		var chunkZ = anchorPosition.getZ() >> 4;
 		var chunkSource = level.getChunkSource();
@@ -547,16 +547,16 @@ public final class WindmillLODRenderManager {
 
 	private static float getRenderAngleForEntry(ClientLevel level, WindmillLODEntry entry, float partialTicks) {
 		var currentTick = level.getGameTime();
-		var lastSynchronizationTick = entry.lastSynchronizationTick();
+		var lastSynchronizationTick = entry.lastSynchronizationTick;
 		var tickDelta = currentTick - lastSynchronizationTick;
 
 		if (tickDelta > 0) {
-			var updatedAngle = entry.rotationAngle() + entry.rotationSpeed() * tickDelta;
-			entry.setRotationAngle(wrapDegrees(updatedAngle));
-			entry.setLastSynchronizationTick(currentTick);
+			var updatedAngle = entry.rotationAngle + entry.rotationSpeed * tickDelta;
+			entry.rotationAngle = wrapDegrees(updatedAngle);
+			entry.lastSynchronizationTick = currentTick;
 		}
 
-		var renderAngle = entry.rotationAngle() + entry.rotationSpeed() * partialTicks;
+		var renderAngle = entry.rotationAngle + entry.rotationSpeed * partialTicks;
 
 		return wrapDegrees(renderAngle);
 	}
