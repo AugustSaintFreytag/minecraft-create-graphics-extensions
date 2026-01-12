@@ -33,9 +33,9 @@ public final class WindmillLODRenderManager {
 	// Configuration
 
 	private static final float BLADE_LENGTH_SCALE = 1.0F;
-	private static final float BLADE_THICKNESS_SCALE = 0.045F;
+	private static final float BLADE_THICKNESS = 0.5F;
+	private static final float BLADE_WIDTH_FACTOR = 0.5F;
 	private static final float MIN_BLADE_LENGTH = 1.0F;
-	private static final float MIN_BLADE_THICKNESS = 0.15F;
 	private static final float ROTATION_UPDATE_THRESHOLD = 0.25F;
 	private static final float TARGET_SEGMENT_LENGTH = 1.0F;
 	private static final float BLADE_LENGTH_TRIM = 2.0F;
@@ -180,8 +180,8 @@ public final class WindmillLODRenderManager {
 
 			try {
 				renderRegister.remove(renderGroup.getId());
-			} catch (Exception ignored) {
-				// DH may reject removal while it is still initializing; ignore.
+			} catch (Exception exception) {
+				// DH may reject removal while it is still initializing, can be ignored.
 			}
 
 			iterator.remove();
@@ -193,9 +193,10 @@ public final class WindmillLODRenderManager {
 
 	private static List<DhApiRenderableBox> getWindmillCrossBoxesForEntry(WindmillLODEntry entry, float rotationAngle) {
 		var bladeLengths = getBladeLengthsForEntry(entry);
-		var bladeThickness = getBladeThicknessForEntry(entry);
+		var bladeThickness = getBladeThickness();
+		var bladeWidth = getBladeWidthForEntry(entry);
 		var thicknessScale = getThicknessScaleForRotationAngle(rotationAngle);
-		var baseBoxes = getCrossBoxesForAxis(entry.rotationAxis, bladeLengths, bladeThickness, thicknessScale);
+		var baseBoxes = getCrossBoxesForAxis(entry.rotationAxis, bladeLengths, bladeWidth, bladeThickness, thicknessScale);
 
 		return rotateBoxesForAxis(baseBoxes, entry.rotationAxis, rotationAngle);
 	}
@@ -217,65 +218,84 @@ public final class WindmillLODRenderManager {
 		return length;
 	}
 
-	private static float getBladeThicknessForEntry(WindmillLODEntry entry) {
-		var minPlaneSize = Math.min(entry.planeWidth, entry.planeHeight);
-		var bladeThickness = minPlaneSize * BLADE_THICKNESS_SCALE;
-
-		if (bladeThickness < MIN_BLADE_THICKNESS) {
-			return MIN_BLADE_THICKNESS;
-		}
-
-		return bladeThickness;
+	private static float getBladeThickness() {
+		return BLADE_THICKNESS;
 	}
 
-	private static List<DhApiRenderableBox> getCrossBoxesForAxis(Direction.Axis rotationAxis, BladeLengths bladeLengths,
+	private static float getBladeWidthForEntry(WindmillLODEntry entry) {
+		var thickestBladeWidth = getThickestBladeWidthForEntry(entry);
+		var bladeWidth = thickestBladeWidth * BLADE_WIDTH_FACTOR;
+
+		return bladeWidth;
+	}
+
+	private static float getThickestBladeWidthForEntry(WindmillLODEntry entry) {
+		return entry.planeDepth;
+	}
+
+	private static List<DhApiRenderableBox> getCrossBoxesForAxis(Direction.Axis rotationAxis, BladeLengths bladeLengths, float bladeWidth,
 			float bladeThickness, float thicknessScale) {
 		return switch (rotationAxis) {
-		case X -> getCrossBoxesForXAxis(bladeLengths, bladeThickness, thicknessScale);
-		case Y -> getCrossBoxesForYAxis(bladeLengths, bladeThickness, thicknessScale);
-		case Z -> getCrossBoxesForZAxis(bladeLengths, bladeThickness, thicknessScale);
+		case X -> getCrossBoxesForXAxis(bladeLengths, bladeWidth, bladeThickness, thicknessScale);
+		case Y -> getCrossBoxesForYAxis(bladeLengths, bladeWidth, bladeThickness, thicknessScale);
+		case Z -> getCrossBoxesForZAxis(bladeLengths, bladeWidth, bladeThickness, thicknessScale);
 		};
 	}
 
-	private static List<DhApiRenderableBox> getCrossBoxesForXAxis(BladeLengths bladeLengths, float bladeThickness, float thicknessScale) {
+	private static List<DhApiRenderableBox> getCrossBoxesForXAxis(BladeLengths bladeLengths, float bladeWidth, float bladeThickness,
+			float thicknessScale) {
 		var boxes = new ArrayList<DhApiRenderableBox>();
-		var halfBladeThickness = bladeThickness / 2.0F;
-		addBladeSegmentsForAxis(boxes, Direction.Axis.Z, Direction.Axis.X, bladeLengths.widthLength(), halfBladeThickness, thicknessScale);
-		addBladeSegmentsForAxis(boxes, Direction.Axis.Y, Direction.Axis.X, bladeLengths.heightLength(), halfBladeThickness, thicknessScale);
+		addBladeSegmentsForAxis(boxes, Direction.Axis.Z, Direction.Axis.X, bladeLengths.widthLength(), bladeWidth, bladeThickness,
+				thicknessScale);
+		addBladeSegmentsForAxis(boxes, Direction.Axis.Y, Direction.Axis.X, bladeLengths.heightLength(), bladeWidth, bladeThickness,
+				thicknessScale);
 
 		return boxes;
 	}
 
-	private static List<DhApiRenderableBox> getCrossBoxesForYAxis(BladeLengths bladeLengths, float bladeThickness, float thicknessScale) {
+	private static List<DhApiRenderableBox> getCrossBoxesForYAxis(BladeLengths bladeLengths, float bladeWidth, float bladeThickness,
+			float thicknessScale) {
 		var boxes = new ArrayList<DhApiRenderableBox>();
-		var halfBladeThickness = bladeThickness / 2.0F;
-		addBladeSegmentsForAxis(boxes, Direction.Axis.X, Direction.Axis.Y, bladeLengths.widthLength(), halfBladeThickness, thicknessScale);
-		addBladeSegmentsForAxis(boxes, Direction.Axis.Z, Direction.Axis.Y, bladeLengths.heightLength(), halfBladeThickness, thicknessScale);
+		addBladeSegmentsForAxis(boxes, Direction.Axis.X, Direction.Axis.Y, bladeLengths.widthLength(), bladeWidth, bladeThickness,
+				thicknessScale);
+		addBladeSegmentsForAxis(boxes, Direction.Axis.Z, Direction.Axis.Y, bladeLengths.heightLength(), bladeWidth, bladeThickness,
+				thicknessScale);
 
 		return boxes;
 	}
 
-	private static List<DhApiRenderableBox> getCrossBoxesForZAxis(BladeLengths bladeLengths, float bladeThickness, float thicknessScale) {
+	private static List<DhApiRenderableBox> getCrossBoxesForZAxis(BladeLengths bladeLengths, float bladeWidth, float bladeThickness,
+			float thicknessScale) {
 		var boxes = new ArrayList<DhApiRenderableBox>();
-		var halfBladeThickness = bladeThickness / 2.0F;
-		addBladeSegmentsForAxis(boxes, Direction.Axis.X, Direction.Axis.Z, bladeLengths.widthLength(), halfBladeThickness, thicknessScale);
-		addBladeSegmentsForAxis(boxes, Direction.Axis.Y, Direction.Axis.Z, bladeLengths.heightLength(), halfBladeThickness, thicknessScale);
+		addBladeSegmentsForAxis(boxes, Direction.Axis.X, Direction.Axis.Z, bladeLengths.widthLength(), bladeWidth, bladeThickness,
+				thicknessScale);
+		addBladeSegmentsForAxis(boxes, Direction.Axis.Y, Direction.Axis.Z, bladeLengths.heightLength(), bladeWidth, bladeThickness,
+				thicknessScale);
 
 		return boxes;
 	}
 
 	private static void addBladeSegmentsForAxis(List<DhApiRenderableBox> boxes, Direction.Axis bladeAxis, Direction.Axis rotationAxis,
-			float bladeLength, float halfBladeThickness, float thicknessScale) {
+			float bladeLength, float bladeWidth, float bladeThickness, float thicknessScale) {
 		var segmentCount = getSegmentCountForBladeLength(bladeLength);
 		var segmentLength = bladeLength / segmentCount;
 		var halfSegmentLength = segmentLength / 2.0F;
 		var startOffset = -bladeLength / 2.0F + halfSegmentLength;
+		var halfBladeWidth = bladeWidth / 2.0F;
+		var halfBladeThickness = bladeThickness / 2.0F;
 		var halfThicknessX = halfBladeThickness;
 		var halfThicknessY = halfBladeThickness;
 		var halfThicknessZ = halfBladeThickness;
-		var axisToScale = getInPlaneThicknessAxisForBlade(rotationAxis, bladeAxis);
 
-		switch (axisToScale) {
+		var widthAxis = getInPlaneWidthAxisForBlade(rotationAxis, bladeAxis);
+
+		switch (widthAxis) {
+		case X -> halfThicknessX = halfBladeWidth;
+		case Y -> halfThicknessY = halfBladeWidth;
+		case Z -> halfThicknessZ = halfBladeWidth;
+		}
+
+		switch (widthAxis) {
 		case X -> halfThicknessX *= thicknessScale;
 		case Y -> halfThicknessY *= thicknessScale;
 		case Z -> halfThicknessZ *= thicknessScale;
@@ -309,7 +329,7 @@ public final class WindmillLODRenderManager {
 		}
 	}
 
-	private static Direction.Axis getInPlaneThicknessAxisForBlade(Direction.Axis rotationAxis, Direction.Axis bladeAxis) {
+	private static Direction.Axis getInPlaneWidthAxisForBlade(Direction.Axis rotationAxis, Direction.Axis bladeAxis) {
 		for (var axis : Direction.Axis.values()) {
 			if (axis != rotationAxis && axis != bladeAxis) {
 				return axis;
