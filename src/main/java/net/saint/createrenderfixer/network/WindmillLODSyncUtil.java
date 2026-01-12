@@ -22,23 +22,23 @@ public final class WindmillLODSyncUtil {
 
 	// Configuration
 
-	private static final ResourceLocation FULL_SYNC_PACKET = new ResourceLocation(Mod.MOD_ID, "windmill_lod_sync");
+	private static final ResourceLocation LOAD_PACKET = new ResourceLocation(Mod.MOD_ID, "windmill_lod_load");
 	private static final ResourceLocation UPDATE_PACKET = new ResourceLocation(Mod.MOD_ID, "windmill_lod_update");
 	private static final ResourceLocation REMOVE_PACKET = new ResourceLocation(Mod.MOD_ID, "windmill_lod_remove");
 
 	// Init
 
 	public static void initServer() {
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> sendFullSyncPacket(handler.player));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> sendLoadAllPacketToPlayer(handler.player));
 	}
 
 	public static void initClient() {
-		ClientPlayNetworking.registerGlobalReceiver(FULL_SYNC_PACKET, (client, handler, buffer, responseSender) -> {
+		ClientPlayNetworking.registerGlobalReceiver(LOAD_PACKET, (client, handler, buffer, responseSender) -> {
 			var entries = readEntries(buffer);
 
 			client.execute(() -> {
 				WindmillLODManager.loadPersistent(entries);
-				Mod.LOGGER.info("Received windmill LOD synchronization with {} entries.", entries.size());
+				Mod.LOGGER.info("Received and loaded {} windmill LOD entries client-side.", entries.size());
 			});
 		});
 
@@ -51,7 +51,8 @@ public final class WindmillLODSyncUtil {
 
 			client.execute(() -> {
 				WindmillLODManager.register(entry);
-				Mod.LOGGER.debug("Applied windmill LOD update for contraption '{}'.", entry.contraptionId);
+				Mod.LOGGER.debug("Received and updated registration for windmill LOD for contraption '{}' client-side.",
+						entry.contraptionId);
 			});
 		});
 
@@ -60,14 +61,14 @@ public final class WindmillLODSyncUtil {
 
 			client.execute(() -> {
 				WindmillLODManager.unregister(contraptionIdentifier);
-				Mod.LOGGER.debug("Applied windmill LOD removal for contraption {}.", contraptionIdentifier);
+				Mod.LOGGER.debug("Deregistered windmill LOD for contraption '{}' client-side.", contraptionIdentifier);
 			});
 		});
 	}
 
 	// Broadcast
 
-	public static void sendFullSyncPacket(ServerPlayer player) {
+	public static void sendLoadAllPacketToPlayer(ServerPlayer player) {
 		var entries = collectEntries();
 		var buffer = PacketByteBufs.create();
 		buffer.writeVarInt(entries.size());
@@ -76,17 +77,17 @@ public final class WindmillLODSyncUtil {
 			writeEntry(buffer, entry);
 		}
 
-		ServerPlayNetworking.send(player, FULL_SYNC_PACKET, buffer);
-		Mod.LOGGER.info("Sent windmill LOD synchronization to {} ({} entries).", player.getGameProfile().getName(), entries.size());
+		ServerPlayNetworking.send(player, LOAD_PACKET, buffer);
+		Mod.LOGGER.info("Sent {} windmill LOD entries data to player '{}'.", entries.size(), player.getGameProfile().getName());
 	}
 
-	public static void broadcastFullSyncPacket(MinecraftServer server) {
+	public static void broadcastLoadAllPacket(MinecraftServer server) {
 		if (server == null) {
 			return;
 		}
 
 		for (var player : server.getPlayerList().getPlayers()) {
-			sendFullSyncPacket(player);
+			sendLoadAllPacketToPlayer(player);
 		}
 	}
 

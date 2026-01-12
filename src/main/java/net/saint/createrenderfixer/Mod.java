@@ -52,7 +52,7 @@ public class Mod implements ModInitializer {
 
 		ServerWorldEvents.UNLOAD.register((server, world) -> {
 			ContraptionBlockRegistry.clearForWorld(world.dimension().location().toString());
-			WindmillLODSyncUtil.broadcastFullSyncPacket(server);
+			WindmillLODSyncUtil.broadcastLoadAllPacket(server);
 		});
 
 		ServerWorldEvents.LOAD.register((server, world) -> ContraptionRegistrationUtil.scanWorld(world));
