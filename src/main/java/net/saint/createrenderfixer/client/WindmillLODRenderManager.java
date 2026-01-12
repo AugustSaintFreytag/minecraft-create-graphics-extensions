@@ -53,8 +53,8 @@ public final class WindmillLODRenderManager {
 	private static final int MIN_SEGMENT_COUNT = 6;
 	private static final int MAX_SEGMENT_COUNT = 24;
 
-	private static final Color WINDMILL_CROSS_COLOR = new Color(149, 129, 95);
-	private static final EDhApiBlockMaterial WINDMILL_CROSS_MATERIAL = EDhApiBlockMaterial.WOOD;
+	private static final Color WINDMILL_CROSS_COLOR = new Color(250, 250, 250);
+	private static final EDhApiBlockMaterial WINDMILL_CROSS_MATERIAL = EDhApiBlockMaterial.SNOW;
 
 	// State
 
