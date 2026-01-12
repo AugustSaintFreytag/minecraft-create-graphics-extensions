@@ -2,6 +2,8 @@ package net.saint.createrenderfixer;
 
 import com.jozufozu.flywheel.api.instance.DynamicInstance;
 
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -16,6 +18,7 @@ import net.saint.createrenderfixer.dh.DhBridge;
 import net.saint.createrenderfixer.dh.DhChunkProcessingHandler;
 import net.saint.createrenderfixer.dh.WindmillLODServerTracker;
 import net.saint.createrenderfixer.network.WindmillLODSyncUtil;
+import net.saint.createrenderfixer.utils.EntityBlacklistManager;
 import net.saint.createrenderfixer.utils.Logger;
 
 public class Mod implements ModInitializer {
@@ -27,18 +30,37 @@ public class Mod implements ModInitializer {
 
 	// References
 
+	public static ModConfig CONFIG;
+
 	public static final Logger LOGGER = Logger.create(MOD_NAME);
 
 	// Init
 
 	@Override
 	public void onInitialize() {
-		ModConfig.load();
+		// Config
+
+		AutoConfig.register(ModConfig.class, JanksonConfigSerializer::new);
+		CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+
+		AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((config, data) -> {
+			EntityBlacklistManager.setBlacklistFromEncodedString(data.freezeInstanceBlacklist);
+			return null;
+		});
+
+		// Commands
+
 		ModCommands.init();
+
+		// Distant Horizons
 
 		if (FabricLoader.getInstance().isModLoaded("distanthorizons")) {
 			initDistantHorizonsInterop();
 		}
+
+		// Load
+
+		EntityBlacklistManager.setBlacklistFromEncodedString(CONFIG.freezeInstanceBlacklist);
 	}
 
 	private void initDistantHorizonsInterop() {

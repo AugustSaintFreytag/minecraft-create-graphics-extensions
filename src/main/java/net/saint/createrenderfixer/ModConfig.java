@@ -1,238 +1,65 @@
 package net.saint.createrenderfixer;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import me.shedaniel.autoconfig.ConfigData;
+import me.shedaniel.autoconfig.annotation.Config;
+import me.shedaniel.autoconfig.annotation.ConfigEntry;
+import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.Comment;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.entity.BlockEntityType;
+@Config(name = Mod.MOD_ID)
+public class ModConfig implements ConfigData {
 
-/**
- * Lightweight runtime-tweakable flags for Flywheel/Create instancing mitigations.
- *
- * These are intentionally kept simple (static + volatile) so they can be flipped from client
- * commands without any serialization layer.
- */
-public final class ModConfig {
+	// Instances
 
-	// Properties
+	@ConfigEntry.Category("instances")
+	@Comment("Enable state caching on supported dynamic instances to prevent re-render when state is unmodified. (Default: true)")
+	public boolean cacheDynamicInstances = true;
 
-	private static volatile boolean forceDisableRateLimiting = false;
+	@ConfigEntry.Category("instances")
+	@Comment("Freeze dynamic instances once they're above a certain block distance from the player. (Default: true)")
+	public boolean freezeDistantInstances = true;
 
-	private static volatile boolean cacheDynamicInstances = true;
+	@ConfigEntry.Category("instances")
+	@Comment("Distance in blocks to freeze dynamic instances. Recommended < 64 to cut in before Create limits tick rate. (Default: 62)")
+	public int freezeDistantInstancesRange = 62;
 
-	private static volatile boolean freezeDistantInstances = true;
+	@ConfigEntry.Category("instances")
+	@Comment("Freeze dynamic instances when they're in an occluded chunk. Not effective due to subpar engine occlusion checks. (Default: false)")
+	public boolean freezeOccludedInstances = false;
 
-	private static volatile boolean freezeOccludedInstances = true;
+	@ConfigEntry.Category("instances")
+	@Comment("Force-disables the tick-based rate limiter on Create dynamic instances. Generally not needed or effective. (Default: false)")
+	public boolean forceDisableRateLimiting = false;
 
-	private static volatile boolean injectContraptionLODs = true;
+	@ConfigEntry.Category("instances")
+	@Comment("Blacklist of contraptions to exclude from instance freezing. Comma-separated list of ids.")
+	public String freezeInstanceBlacklist = "create:windmill_bearing";
 
-	private static volatile int freezeDistantInstancesRange = 62;
+	// LODs
 
-	private static volatile boolean limitEntityRenderDistance = true;
+	@ConfigEntry.Category("lods")
+	@Comment("Enable injection of Create contraption blocks for LOD building with Distant Horizons. (Default: true)")
+	public boolean injectContraptionLODs = true;
 
-	private static volatile boolean limitBlockEntityRenderDistance = true;
+	// Entities
 
-	private static volatile int entityLODDistanceOffset = 0;
+	@ConfigEntry.Category("entities")
+	@Comment("Limit entity render distance. (Default: true)")
+	public boolean limitEntityRenderDistance = true;
 
-	private static volatile int blockEntityLODDistanceOffset = 0;
+	@ConfigEntry.Category("entities")
+	@Comment("Apply entity render distance limit to all entities, not just Create entities. (Default: false)")
+	public boolean limitEntityRenderDistanceAppliesToAll = false;
 
-	private static final Set<ResourceLocation> freezeBlacklist = ConcurrentHashMap.newKeySet();
+	@ConfigEntry.Category("entities")
+	@Comment("Offset added to entity LOD distance thresholds. (Default: 0)")
+	public int entityLODDistanceOffset = 0;
 
-	// Accessors
+	@ConfigEntry.Category("entities")
+	@Comment("Limit block entity render distance to respect LOD thresholds. (Default: true)")
+	public boolean limitBlockEntityRenderDistance = true;
 
-	public static boolean forceDisableRateLimiting() {
-		return forceDisableRateLimiting;
-	}
+	@ConfigEntry.Category("entities")
+	@Comment("Offset added to block entity LOD distance thresholds. (Default: 0)")
+	public int blockEntityLODDistanceOffset = 0;
 
-	public static boolean cacheDynamicInstances() {
-		return cacheDynamicInstances;
-	}
-
-	public static boolean freezeDistantInstances() {
-		return freezeDistantInstances;
-	}
-
-	public static boolean freezeOccludedInstances() {
-		return freezeOccludedInstances;
-	}
-
-	public static boolean injectContraptionLODs() {
-		return injectContraptionLODs;
-	}
-
-	public static int freezeDistantInstancesRange() {
-		return freezeDistantInstancesRange;
-	}
-
-	public static Set<ResourceLocation> freezeBlacklist() {
-		return Collections.unmodifiableSet(freezeBlacklist);
-	}
-
-	public static boolean limitEntityRenderDistance() {
-		return limitEntityRenderDistance;
-	}
-
-	public static boolean limitBlockEntityRenderDistance() {
-		return limitBlockEntityRenderDistance;
-	}
-
-	public static int entityLODDistanceOffset() {
-		return entityLODDistanceOffset;
-	}
-
-	public static int blockEntityLODDistanceOffset() {
-		return blockEntityLODDistanceOffset;
-	}
-
-	public static void setForceDisableRateLimiting(boolean value) {
-		forceDisableRateLimiting = value;
-		Mod.LOGGER.info("Force disable rate limiting set to {}", value ? "ENABLED" : "DISABLED");
-		save();
-	}
-
-	public static void setCacheDynamicInstances(boolean value) {
-		cacheDynamicInstances = value;
-		Mod.LOGGER.info("Instance data caching set to {}", value ? "ENABLED" : "DISABLED");
-		save();
-	}
-
-	public static void setFreezeDistantInstances(boolean value) {
-		freezeDistantInstances = value;
-		Mod.LOGGER.info("Freezing distant instances set to {}", value ? "ENABLED" : "DISABLED");
-		save();
-	}
-
-	public static void setFreezeOccludedInstances(boolean value) {
-		freezeOccludedInstances = value;
-		Mod.LOGGER.info("Freezing occluded instances set to {}", value ? "ENABLED" : "DISABLED");
-		save();
-	}
-
-	public static void setInjectContraptionLODs(boolean value) {
-		injectContraptionLODs = value;
-		var status = value ? "ENABLED" : "DISABLED";
-		Mod.LOGGER.info("Contraption LOD injection set to '{}'.", status);
-		save();
-	}
-
-	public static void setFreezeDistantInstancesRange(int blocks) {
-		freezeDistantInstancesRange = Math.max(0, blocks);
-		Mod.LOGGER.info("Freeze distance set to {} blocks", freezeDistantInstancesRange);
-		save();
-	}
-
-	public static void addFreezeBlacklist(ResourceLocation id) {
-		if (freezeBlacklist.add(id)) {
-			Mod.LOGGER.info("Added {} to freeze blacklist", id);
-			save();
-		}
-	}
-
-	public static void removeFreezeBlacklist(ResourceLocation id) {
-		if (freezeBlacklist.remove(id)) {
-			Mod.LOGGER.info("Removed {} from freeze blacklist", id);
-			save();
-		}
-	}
-
-	public static void clearFreezeBlacklist() {
-		freezeBlacklist.clear();
-		Mod.LOGGER.info("Cleared freeze blacklist");
-		save();
-	}
-
-	public static boolean isFreezeBlacklisted(BlockEntityType<?> type) {
-		var id = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type);
-		return id != null && freezeBlacklist.contains(id);
-	}
-
-	public static void setLimitEntityRenderDistance(boolean value) {
-		limitEntityRenderDistance = value;
-		Mod.LOGGER.info("Entity render distance limiting set to {}", value ? "ENABLED" : "DISABLED");
-		save();
-	}
-
-	public static void setLimitBlockEntityRenderDistance(boolean value) {
-		limitBlockEntityRenderDistance = value;
-		var status = getStatusForToggle(value);
-		Mod.LOGGER.info("Block entity render distance limiting set to '{}'.", status);
-		save();
-	}
-
-	public static void setEntityLODDistanceOffset(int value) {
-		entityLODDistanceOffset = value;
-		Mod.LOGGER.info("Entity distance LOD offset set to {}", value);
-		save();
-	}
-
-	public static void setBlockEntityLODDistanceOffset(int value) {
-		blockEntityLODDistanceOffset = value;
-		Mod.LOGGER.info("Block entity LOD distance offset set to '{}'.", blockEntityLODDistanceOffset);
-		save();
-	}
-
-	// Debug
-
-	public static String debugDescription() {
-		return "forceDisableRateLimiting=" + forceDisableRateLimiting + ", cacheDynamicInstances=" + cacheDynamicInstances
-				+ ", freezeDistantInstances=" + freezeDistantInstances + ", freezeOccludedInstances=" + freezeOccludedInstances
-				+ ", injectContraptionLODs=" + injectContraptionLODs + ", freezeDistanceBlocks=" + freezeDistantInstancesRange
-				+ ", freezeBlacklist=" + freezeBlacklist + ", limitEntityRenderDistance=" + limitEntityRenderDistance
-				+ ", limitBlockEntityRenderDistance=" + limitBlockEntityRenderDistance + ", entityLODDistanceOffset="
-				+ entityLODDistanceOffset + ", blockEntityLODDistanceOffset=" + blockEntityLODDistanceOffset;
-	}
-
-	// Persistence
-
-	public static void load() {
-		var data = ModConfigLoad.load(snapshot());
-		applyLoadedData(data);
-	}
-
-	private static void save() {
-		ModConfigLoad.save(snapshot());
-	}
-
-	private static ModConfigLoad.Data snapshot() {
-		return new ModConfigLoad.Data(cacheDynamicInstances, freezeDistantInstances, freezeOccludedInstances, injectContraptionLODs,
-				freezeDistantInstancesRange, freezeBlacklist.stream().map(ResourceLocation::toString).toList());
-	}
-
-	private static void applyLoadedData(ModConfigLoad.Data data) {
-		cacheDynamicInstances = data.cacheDynamicInstances();
-		freezeDistantInstances = data.freezeDistantInstances();
-		freezeOccludedInstances = data.freezeOccludedInstances();
-		injectContraptionLODs = resolveInjectContraptionLODs(data);
-		freezeDistantInstancesRange = Math.max(0, data.freezeBlockDistance());
-
-		freezeBlacklist.clear();
-
-		for (var id : data.freezeBlacklist()) {
-			try {
-				freezeBlacklist.add(new ResourceLocation(id));
-			} catch (Exception exception) {
-				Mod.LOGGER.warn("Skipping invalid resource id {} in config", id, exception);
-			}
-		}
-	}
-
-	private static boolean resolveInjectContraptionLODs(ModConfigLoad.Data data) {
-		var injectContraptionLODs = data.injectContraptionLODs();
-
-		if (injectContraptionLODs == null) {
-			return true;
-		}
-
-		return injectContraptionLODs;
-	}
-
-	private static String getStatusForToggle(boolean value) {
-		if (value) {
-			return "ENABLED";
-		}
-
-		return "DISABLED";
-	}
 }
