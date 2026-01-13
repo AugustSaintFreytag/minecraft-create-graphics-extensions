@@ -8,12 +8,6 @@ import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.Comment;
 @Config(name = Mod.MOD_ID)
 public class ModConfig implements ConfigData {
 
-	// Logging
-
-	@ConfigEntry.Category("logging")
-	@Comment("Enable extra logging for debugging Create Render Fixer. (Default: false)")
-	public boolean enableLogging = false;
-
 	// Instances
 
 	@ConfigEntry.Category("instances")
@@ -121,5 +115,11 @@ public class ModConfig implements ConfigData {
 	@ConfigEntry.Category("entities")
 	@Comment("Offset added to block entity LOD distance thresholds. (Default: 0)")
 	public int blockEntityLODDistanceOffset = 0;
+
+	// Debug
+
+	@ConfigEntry.Category("debug")
+	@Comment("Enables logging for lifecycles, registrations, updates, removals. (Default: false)")
+	public boolean enableLogging = false;
 
 }
