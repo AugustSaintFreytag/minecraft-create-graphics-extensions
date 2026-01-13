@@ -91,6 +91,18 @@ public class ModConfig implements ConfigData {
 	public float windmillRotationUpdateThreshold = 0.5f;
 
 	@ConfigEntry.Category("lods-windmill")
+	@Comment("Tick interval to synchronize active windmill LODs entries from server to client. (Default: 20)")
+	public int windmillSyncTickInterval = 20;
+
+	@ConfigEntry.Category("lods-windmill")
+	@Comment("Maximum rotation angle delta between server expectation and client actual to cause override. (Default: 5.0)")
+	public float windmillRotationAngleSyncThreshold = 5.0f;
+
+	@ConfigEntry.Category("lods-windmill")
+	@Comment("Maximum rotation speed delta between server expectation and client actual to cause override. (Default: 0.05)")
+	public float windmillRotationSpeedSyncThreshold = 0.05f;
+
+	@ConfigEntry.Category("lods-windmill")
 	@Comment("Maximum render distance in blocks for windmill LODs. (Default: 2048)")
 	public float windmillMaximumRenderDistance = 2048.0f;
 
