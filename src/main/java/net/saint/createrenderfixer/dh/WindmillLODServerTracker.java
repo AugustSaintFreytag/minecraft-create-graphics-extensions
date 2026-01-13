@@ -197,6 +197,10 @@ public final class WindmillLODServerTracker {
 			return false;
 		}
 
+		if (!shouldAllowOverrideForEntryAge(entry, currentTick)) {
+			return false;
+		}
+
 		var angleDelta = getRotationDeltaForAngles(currentAngle, predictedAngle);
 		var speedDelta = Math.abs(currentSpeed - predictedSpeed);
 
@@ -207,14 +211,20 @@ public final class WindmillLODServerTracker {
 		return true;
 	}
 
+	private static boolean shouldAllowOverrideForEntryAge(WindmillLODEntry entry, long currentTick) {
+		var minimumAgeTicks = getMinimumOverrideAgeTicks();
+		var entryAgeTicks = Math.max(0, currentTick - entry.tickRegistered);
 
-		if (speedDelta < SPEED_SYNC_THRESHOLD && angleDelta < ROTATION_SYNC_THRESHOLD) {
+		if (entryAgeTicks < minimumAgeTicks) {
 			return false;
 		}
 
 		return true;
 	}
 
+	private static long getMinimumOverrideAgeTicks() {
+		return (long) Mod.CONFIG.windmillSyncTickInterval * 4L;
+	}
 
 	// Utility (Rotation)
 
