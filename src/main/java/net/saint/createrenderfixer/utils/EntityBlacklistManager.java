@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import net.minecraft.resources.ResourceLocation;
+import net.saint.createrenderfixer.Mod;
 
 public final class EntityBlacklistManager {
 
@@ -17,12 +18,18 @@ public final class EntityBlacklistManager {
 		return entityBlacklist.contains(id);
 	}
 
+	// Mutation
+
 	public static void setBlacklistFromSet(Set<ResourceLocation> blacklist) {
 		entityBlacklist = blacklist;
 	}
 
 	public static void setBlacklistFromEncodedString(String value) {
 		entityBlacklist = blacklistSetFromString(value);
+	}
+
+	public static void reloadFromConfig() {
+		setBlacklistFromEncodedString(Mod.CONFIG.freezeInstanceBlacklist);
 	}
 
 	// Utility

@@ -44,7 +44,7 @@ public class Mod implements ModInitializer {
 		CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 
 		AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((config, data) -> {
-			EntityBlacklistManager.setBlacklistFromEncodedString(data.freezeInstanceBlacklist);
+			EntityBlacklistManager.reloadFromConfig();
 			return null;
 		});
 
@@ -60,7 +60,7 @@ public class Mod implements ModInitializer {
 
 		// Load
 
-		EntityBlacklistManager.setBlacklistFromEncodedString(CONFIG.freezeInstanceBlacklist);
+		EntityBlacklistManager.reloadFromConfig();
 	}
 
 	private void initDistantHorizonsInterop() {
