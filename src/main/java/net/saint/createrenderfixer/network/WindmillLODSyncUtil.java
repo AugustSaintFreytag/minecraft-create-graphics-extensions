@@ -9,7 +9,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -138,40 +137,14 @@ public final class WindmillLODSyncUtil {
 
 	@Nullable
 	private static WindmillLODEntry readEntry(FriendlyByteBuf buffer) {
-		var contraptionId = buffer.readUUID();
-		var dimensionId = buffer.readUtf();
-		var anchorPosition = buffer.readBlockPos();
-		var rotationAxis = buffer.readEnum(Direction.Axis.class);
-		var bearingDirection = buffer.readEnum(Direction.class);
-		var planeWidth = buffer.readFloat();
-		var planeHeight = buffer.readFloat();
-		var planeDepth = buffer.readFloat();
-		var rotationSpeed = buffer.readFloat();
-		var rotationAngle = buffer.readFloat();
-		var tickRegistered = buffer.readLong();
-		var lastSynchronizationTick = buffer.readLong();
+		var nbt = buffer.readNbt();
+		var entry = WindmillLODEntry.fromNbt(nbt);
 
-		if (dimensionId.isBlank()) {
-			return null;
-		}
-
-		return new WindmillLODEntry(contraptionId, dimensionId, anchorPosition, rotationAxis, bearingDirection, planeWidth, planeHeight,
-				planeDepth, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
+		return entry;
 	}
 
 	private static void writeEntry(FriendlyByteBuf buffer, WindmillLODEntry entry) {
-		buffer.writeUUID(entry.contraptionId);
-		buffer.writeUtf(entry.dimensionId);
-		buffer.writeBlockPos(entry.anchorPosition);
-		buffer.writeEnum(entry.rotationAxis);
-		buffer.writeEnum(entry.bearingDirection);
-		buffer.writeFloat(entry.planeWidth);
-		buffer.writeFloat(entry.planeHeight);
-		buffer.writeFloat(entry.planeDepth);
-		buffer.writeFloat(entry.rotationSpeed);
-		buffer.writeFloat(entry.rotationAngle);
-		buffer.writeLong(entry.tickRegistered);
-		buffer.writeLong(entry.lastSynchronizationTick);
+		buffer.writeNbt(entry.toNbt());
 	}
 
 	private static ArrayList<WindmillLODEntry> collectEntries() {

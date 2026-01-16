@@ -1,6 +1,7 @@
 package net.saint.createrenderfixer.dh;
 
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -9,7 +10,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
-import net.saint.createrenderfixer.dh.WindmillLODGeometryUtil.BladeGeometry;
+import net.saint.createrenderfixer.library.Size2D;
+
+// TODO: Check if plane size is now obsolete and can be removed.
 
 public final class WindmillLODEntry {
 
@@ -20,26 +23,12 @@ public final class WindmillLODEntry {
 	public static final String NBT_ANCHOR_POSITION = "AnchorPosition";
 	public static final String NBT_ROTATION_AXIS = "RotationAxis";
 	public static final String NBT_BEARING_DIRECTION = "BearingDirection";
-	public static final String NBT_PLANE_WIDTH = "PlaneWidth";
-	public static final String NBT_PLANE_HEIGHT = "PlaneHeight";
-	public static final String NBT_PLANE_DEPTH = "PlaneDepth";
+	public static final String NBT_PLANE_SIZE = "PlaneSize";
+	public static final String NBT_BLADE_GEOMETRY = "BladeGeometry";
 	public static final String NBT_ROTATION_SPEED = "RotationSpeed";
 	public static final String NBT_ROTATION_ANGLE = "RotationAngle";
 	public static final String NBT_TICK_REGISTERED = "TickRegistered";
 	public static final String NBT_LAST_SYNCHRONIZATION_TICK = "LastSynchronizationTick";
-
-	private static final String LEGACY_NBT_IDENTIFIER = "identifier";
-	private static final String LEGACY_NBT_ID = "id";
-	private static final String LEGACY_NBT_DIMENSION = "dimension";
-	private static final String LEGACY_NBT_ANCHOR = "anchor";
-	private static final String LEGACY_NBT_AXIS = "axis";
-	private static final String LEGACY_NBT_BEARING_DIRECTION = "bearingDirection";
-	private static final String LEGACY_NBT_PLANE_WIDTH = "planeWidth";
-	private static final String LEGACY_NBT_PLANE_HEIGHT = "planeHeight";
-	private static final String LEGACY_NBT_PLANE_DEPTH = "planeDepth";
-	private static final String LEGACY_NBT_SPEED = "speed";
-	private static final String LEGACY_NBT_ANGLE = "angle";
-	private static final String LEGACY_NBT_LAST_SYNCHRONIZATION_TICK = "lastSynchronizationTick";
 
 	// State
 
@@ -48,10 +37,8 @@ public final class WindmillLODEntry {
 	public final BlockPos anchorPosition;
 	public final Direction.Axis rotationAxis;
 	public final Direction bearingDirection;
-	public final float planeWidth;
-	public final float planeHeight;
-	public final float planeDepth;
-	public final BladeGeometry bladeGeometry;
+	public final Size2D planeSize;
+	public final WindmillBladeGeometry bladeGeometry;
 	public final long tickRegistered;
 
 	public volatile float rotationSpeed;
@@ -63,17 +50,15 @@ public final class WindmillLODEntry {
 	// Init
 
 	public WindmillLODEntry(UUID contraptionId, String dimensionId, BlockPos anchorPosition, Direction.Axis rotationAxis,
-			Direction bearingDirection, float planeWidth, float planeHeight, float planeDepth, long tickRegistered, float rotationSpeed,
+			Direction bearingDirection, Size2D planeSize, WindmillBladeGeometry bladeGeometry, long tickRegistered, float rotationSpeed,
 			float rotationAngle, long lastSynchronizationTick) {
 		this.contraptionId = contraptionId;
 		this.dimensionId = dimensionId;
 		this.anchorPosition = anchorPosition;
 		this.rotationAxis = rotationAxis;
 		this.bearingDirection = bearingDirection;
-		this.planeWidth = planeWidth;
-		this.planeHeight = planeHeight;
-		this.planeDepth = planeDepth;
-		this.bladeGeometry = WindmillLODGeometryUtil.makeBladeGeometry(planeWidth, planeHeight, planeDepth);
+		this.planeSize = planeSize;
+		this.bladeGeometry = bladeGeometry;
 		this.tickRegistered = tickRegistered;
 		this.rotationSpeed = rotationSpeed;
 		this.rotationAngle = rotationAngle;
@@ -105,15 +90,11 @@ public final class WindmillLODEntry {
 			return false;
 		}
 
-		if (planeWidth != other.planeWidth) {
+		if (!planeSize.equals(other.planeSize)) {
 			return false;
 		}
 
-		if (planeHeight != other.planeHeight) {
-			return false;
-		}
-
-		if (planeDepth != other.planeDepth) {
+		if (!bladeGeometry.equals(other.bladeGeometry)) {
 			return false;
 		}
 
@@ -123,8 +104,8 @@ public final class WindmillLODEntry {
 	// Persistence
 
 	public WindmillLODEntry createPersistenceSnapshot() {
-		return new WindmillLODEntry(contraptionId, dimensionId, anchorPosition, rotationAxis, bearingDirection, planeWidth, planeHeight,
-				planeDepth, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
+		return new WindmillLODEntry(contraptionId, dimensionId, anchorPosition, rotationAxis, bearingDirection, planeSize, bladeGeometry,
+				tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
 	}
 
 	// Encoding
@@ -141,9 +122,8 @@ public final class WindmillLODEntry {
 		windmillTag.put(NBT_ANCHOR_POSITION, NbtUtils.writeBlockPos(anchorPosition));
 		windmillTag.putString(NBT_ROTATION_AXIS, rotationAxis.getName());
 		windmillTag.putString(NBT_BEARING_DIRECTION, bearingDirection.getName());
-		windmillTag.putFloat(NBT_PLANE_WIDTH, planeWidth);
-		windmillTag.putFloat(NBT_PLANE_HEIGHT, planeHeight);
-		windmillTag.putFloat(NBT_PLANE_DEPTH, planeDepth);
+		windmillTag.put(NBT_PLANE_SIZE, planeSize.toNbt());
+		windmillTag.put(NBT_BLADE_GEOMETRY, bladeGeometry.toNbt());
 		windmillTag.putFloat(NBT_ROTATION_SPEED, rotationSpeed);
 		windmillTag.putFloat(NBT_ROTATION_ANGLE, rotationAngle);
 		windmillTag.putLong(NBT_TICK_REGISTERED, tickRegistered);
@@ -158,44 +138,43 @@ public final class WindmillLODEntry {
 			return null;
 		}
 
-		var identifierValue = getStringForKeys(entryTag, NBT_CONTRAPTION_ID, LEGACY_NBT_IDENTIFIER, LEGACY_NBT_ID);
-		var dimensionIdentifier = getStringForKeys(entryTag, NBT_DIMENSION_ID, LEGACY_NBT_DIMENSION);
+		var identifierValue = getStringForKeys(entryTag, NBT_CONTRAPTION_ID);
+		var dimensionIdentifier = getStringForKeys(entryTag, NBT_DIMENSION_ID);
 
 		if (identifierValue.isBlank() || dimensionIdentifier.isBlank()) {
 			return null;
 		}
 
-		var anchorTag = getCompoundTagForKeys(entryTag, NBT_ANCHOR_POSITION, LEGACY_NBT_ANCHOR);
+		var anchorTag = getCompoundTagForKey(entryTag, NBT_ANCHOR_POSITION);
 
 		if (anchorTag == null) {
 			return null;
 		}
 
 		var anchorPosition = NbtUtils.readBlockPos(anchorTag);
-		var axisName = getStringForKeys(entryTag, NBT_ROTATION_AXIS, LEGACY_NBT_AXIS);
+		var axisName = getStringForKeys(entryTag, NBT_ROTATION_AXIS);
 		var rotationAxis = getRotationAxisForName(axisName);
-		var bearingDirectionName = getStringForKeys(entryTag, NBT_BEARING_DIRECTION, LEGACY_NBT_BEARING_DIRECTION);
+		var bearingDirectionName = getStringForKeys(entryTag, NBT_BEARING_DIRECTION);
 		var bearingDirection = getBearingDirectionForName(bearingDirectionName, rotationAxis);
-		var planeWidth = getFloatForKeysOrDefault(entryTag, 1.0F, NBT_PLANE_WIDTH, LEGACY_NBT_PLANE_WIDTH);
-		var planeHeight = getFloatForKeysOrDefault(entryTag, 1.0F, NBT_PLANE_HEIGHT, LEGACY_NBT_PLANE_HEIGHT);
-		var planeDepth = getFloatForKeysOrDefault(entryTag, 1.0F, NBT_PLANE_DEPTH, LEGACY_NBT_PLANE_DEPTH);
-		var rotationSpeed = getFloatForKeysOrDefault(entryTag, 0.0F, NBT_ROTATION_SPEED, LEGACY_NBT_SPEED);
-		var rotationAngle = getFloatForKeysOrDefault(entryTag, 0.0F, NBT_ROTATION_ANGLE, LEGACY_NBT_ANGLE);
-		var lastSynchronizationTick = getLongForKeysOrDefault(entryTag, 0L, NBT_LAST_SYNCHRONIZATION_TICK,
-				LEGACY_NBT_LAST_SYNCHRONIZATION_TICK);
-		var tickRegistered = getLongForKeysOrDefault(entryTag, lastSynchronizationTick, NBT_TICK_REGISTERED);
+		var planeSize = getCompoundTagAndDecodeForKeyOrDefault(entryTag, NBT_PLANE_SIZE, Size2D::fromNbt, Size2D.zero());
+		var bladeGeometry = getCompoundTagAndDecodeForKeyOrDefault(entryTag, NBT_BLADE_GEOMETRY, WindmillBladeGeometry::fromNbt,
+				WindmillBladeGeometry.zero());
+		var rotationSpeed = getFloatForKeyOrDefault(entryTag, 0.0F, NBT_ROTATION_SPEED);
+		var rotationAngle = getFloatForKeyOrDefault(entryTag, 0.0F, NBT_ROTATION_ANGLE);
+		var lastSynchronizationTick = getLongForKeyOrDefault(entryTag, 0L, NBT_LAST_SYNCHRONIZATION_TICK);
+		var tickRegistered = getLongForKeyOrDefault(entryTag, lastSynchronizationTick, NBT_TICK_REGISTERED);
 
 		try {
 			var contraptionIdentifier = UUID.fromString(identifierValue);
 
 			return new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, anchorPosition, rotationAxis, bearingDirection,
-					planeWidth, planeHeight, planeDepth, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
+					planeSize, bladeGeometry, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
 		} catch (IllegalArgumentException ignored) {
 			return null;
 		}
 	}
 
-	// Utility
+	// NBT Resolve
 
 	private static String getStringForKeys(CompoundTag entryTag, String primaryKey, String... fallbackKeys) {
 		var value = entryTag.getString(primaryKey);
@@ -215,47 +194,39 @@ public final class WindmillLODEntry {
 		return "";
 	}
 
-	@Nullable
-	private static CompoundTag getCompoundTagForKeys(CompoundTag entryTag, String primaryKey, String... fallbackKeys) {
-		if (entryTag.contains(primaryKey, Tag.TAG_COMPOUND)) {
-			return entryTag.getCompound(primaryKey);
+	private static <T> T getCompoundTagAndDecodeForKeyOrDefault(CompoundTag entryTag, String key, Function<CompoundTag, T> block,
+			T defaultValue) {
+		var tag = getCompoundTagForKey(entryTag, key);
+
+		if (tag == null) {
+			return defaultValue;
 		}
 
-		for (var fallbackKey : fallbackKeys) {
-			if (entryTag.contains(fallbackKey, Tag.TAG_COMPOUND)) {
-				return entryTag.getCompound(fallbackKey);
-			}
-		}
-
-		return null;
+		return block.apply(tag);
 	}
 
-	private static float getFloatForKeysOrDefault(CompoundTag entryTag, float defaultValue, String primaryKey, String... fallbackKeys) {
-		if (entryTag.contains(primaryKey, Tag.TAG_FLOAT)) {
-			return entryTag.getFloat(primaryKey);
+	private static CompoundTag getCompoundTagForKey(CompoundTag entryTag, String key) {
+		if (!entryTag.contains(key, Tag.TAG_COMPOUND)) {
+			return null;
 		}
 
-		for (var fallbackKey : fallbackKeys) {
-			if (entryTag.contains(fallbackKey, Tag.TAG_FLOAT)) {
-				return entryTag.getFloat(fallbackKey);
-			}
-		}
-
-		return defaultValue;
+		return entryTag.getCompound(key);
 	}
 
-	private static long getLongForKeysOrDefault(CompoundTag entryTag, long defaultValue, String primaryKey, String... fallbackKeys) {
-		if (entryTag.contains(primaryKey, Tag.TAG_LONG)) {
-			return entryTag.getLong(primaryKey);
+	private static float getFloatForKeyOrDefault(CompoundTag entryTag, float defaultValue, String key) {
+		if (!entryTag.contains(key, Tag.TAG_FLOAT)) {
+			return defaultValue;
 		}
 
-		for (var fallbackKey : fallbackKeys) {
-			if (entryTag.contains(fallbackKey, Tag.TAG_LONG)) {
-				return entryTag.getLong(fallbackKey);
-			}
+		return entryTag.getFloat(key);
+	}
+
+	private static long getLongForKeyOrDefault(CompoundTag entryTag, long defaultValue, String key) {
+		if (!entryTag.contains(key, Tag.TAG_LONG)) {
+			return defaultValue;
 		}
 
-		return defaultValue;
+		return entryTag.getLong(key);
 	}
 
 	private static Direction.Axis getRotationAxisForName(String axisName) {

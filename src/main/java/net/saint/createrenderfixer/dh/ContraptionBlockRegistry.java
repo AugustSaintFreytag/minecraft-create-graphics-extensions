@@ -13,6 +13,7 @@ import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiChunkModifiedEvent;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
+import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 
@@ -85,10 +86,7 @@ public final class ContraptionBlockRegistry {
 	// Registration
 
 	public static void register(AbstractContraptionEntity entity) {
-		if (!(entity.level() instanceof ServerLevel serverLevel)) {
-			return;
-		}
-
+		var serverLevel = (ServerLevel) entity.level();
 		var contraption = entity.getContraption();
 
 		if (contraption == null || contraption.getBlocks().isEmpty()) {
@@ -101,22 +99,19 @@ public final class ContraptionBlockRegistry {
 			return;
 		}
 
+		var anchorPosition = contraption.anchor;
 		var dimensionId = serverLevel.dimension().location().toString();
 		var entry = new ContraptionEntry(dimensionId);
-		var anchorPosition = contraption.anchor;
 
 		if (anchorPosition == null) {
 			Mod.LOGGER.warn("Contraption '{}' has no anchor block position and can not be registered.", contraptionId);
-
 			return;
 		}
 
 		var windmillData = resolveWindmillRegistrationData(entity, serverLevel);
 
 		if (windmillData != null) {
-			var planeSize = WindmillLODAnalysisUtil.getWindmillPlaneSize(contraption, windmillData.rotationAxis(),
-					windmillData.bounds());
-			registerWindmillEntry(contraptionId, serverLevel, dimensionId, windmillData, planeSize);
+			registerWindmillEntry(serverLevel, dimensionId, contraptionId, contraption, windmillData);
 			removeStoredBlocksForWindmill(dimensionId, anchorPosition, windmillData.bounds());
 
 			return;
@@ -290,26 +285,36 @@ public final class ContraptionBlockRegistry {
 
 	// Utility
 
-	private static void registerWindmillEntry(UUID contraptionIdentifier, ServerLevel serverLevel, String dimensionIdentifier,
-			WindmillRegistrationData windmillData, WindmillLODAnalysisUtil.PlaneSize planeSize) {
-		var existingEntry = WindmillLODManager.find(contraptionIdentifier);
+	private static void registerWindmillEntry(ServerLevel serverLevel, String dimensionIdentifier, UUID id, Contraption contraption,
+			WindmillRegistrationData windmillData) {
+		var existingEntry = WindmillLODManager.find(id);
 
 		if (existingEntry != null) {
-			Mod.LOGGER.info("Windmill contraption '{}' with registered LOD entry loading back in.", contraptionIdentifier);
+			Mod.LOGGER.info("Windmill contraption '{}' with registered LOD entry loading back in.", id);
+			return;
 		}
-		var rotationSpeed = windmillData.windmillBearing().getAngularSpeed();
-		var rotationAngle = windmillData.windmillBearing().getInterpolatedAngle(1.0F);
+
+		var windmillBearing = windmillData.windmillBearing();
+		var rotationSpeed = windmillBearing.getAngularSpeed();
+		var rotationAngle = windmillBearing.getInterpolatedAngle(1.0F);
+		var bearingDirection = windmillData.bearingDirection();
+
+		var planeSize = WindmillLODAnalysisUtil.getPlaneSizeForContraptionBounds(windmillData.rotationAxis(), windmillData.bounds());
+		var bladeGeometry = WindmillLODAnalysisUtil.getWindmillBladeGeometry(contraption, windmillData.rotationAxis(),
+				windmillData.bounds());
+
 		var lastSynchronizationTick = serverLevel.getGameTime();
 		var tickRegistered = lastSynchronizationTick;
-		var bearingDirection = windmillData.bearingDirection();
-		var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, windmillData.controllerPosition(),
-				windmillData.rotationAxis(), bearingDirection, planeSize.width(), planeSize.height(), planeSize.depth(), tickRegistered,
-				rotationSpeed, rotationAngle, lastSynchronizationTick);
+
+		var entry = new WindmillLODEntry(id, dimensionIdentifier, windmillData.controllerPosition(), windmillData.rotationAxis(),
+				bearingDirection, planeSize, bladeGeometry, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
 
 		WindmillLODManager.register(entry);
 		WindmillLODSyncUtil.broadcastUpdatePacket(serverLevel.getServer(), entry);
 
-		Mod.LOGGER.info("Registered windmill LOD entry for contraption '{}' in '{}'.", contraptionIdentifier, dimensionIdentifier);
+		Mod.LOGGER.info("Registered windmill LOD entry for contraption '{}' in '{}' (blade size l:{}, w:{}, d:{}, s:{}).", id,
+				dimensionIdentifier, bladeGeometry.length(), bladeGeometry.width(), bladeGeometry.depth(),
+				bladeGeometry.numberOfSegments());
 	}
 
 	private static boolean unregisterInternal(UUID contraptionId) {
