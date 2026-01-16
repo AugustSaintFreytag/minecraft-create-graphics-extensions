@@ -72,7 +72,7 @@ public final class WindmillLODAnalysisUtil {
 	}
 
 	private static float getBladeDepthForWidth(float bladeWidth) {
-		return 0.5f + (bladeWidth - 0.5f) * Mod.CONFIG.windmillBladeThicknessFactor;
+		return 0.5f + (bladeWidth - 0.5f) * Mod.CONFIG.windmillBladeDepthFactor;
 	}
 
 	// Analysis

@@ -23,10 +23,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.saint.createrenderfixer.Mod;
 import net.saint.createrenderfixer.dh.DhBridge;
+import net.saint.createrenderfixer.dh.WindmillLODBoxUtil;
 import net.saint.createrenderfixer.dh.WindmillLODEntry;
 import net.saint.createrenderfixer.dh.WindmillLODManager;
 import net.saint.createrenderfixer.dh.WindmillLODMaterialManager;
-import net.saint.createrenderfixer.dh.WindmillLODTransformUtil;
 
 public final class WindmillLODRenderManager {
 
@@ -75,10 +75,8 @@ public final class WindmillLODRenderManager {
 			}
 
 			var renderAngle = getRenderAngleForEntry(level, entry, partialTicks);
-
 			activeIdentifiers.add(entry.contraptionId);
-
-			var renderGroup = ensureRenderGroup(renderFactory, renderRegister, entry);
+			var renderGroup = getOrCreateRenderGroup(renderFactory, renderRegister, entry);
 
 			if (renderGroup == null) {
 				continue;
@@ -93,13 +91,12 @@ public final class WindmillLODRenderManager {
 	// Rendering
 
 	@Nullable
-	private static IDhApiRenderableBoxGroup ensureRenderGroup(IDhApiCustomRenderObjectFactory renderFactory,
+	private static IDhApiRenderableBoxGroup getOrCreateRenderGroup(IDhApiCustomRenderObjectFactory renderFactory,
 			IDhApiCustomRenderRegister renderRegister, WindmillLODEntry entry) {
 		var renderGroup = RENDER_GROUPS.get(entry.contraptionId);
 
 		if (renderGroup != null) {
 			entry.renderGroupId = renderGroup.getId();
-
 			return renderGroup;
 		}
 
@@ -170,15 +167,10 @@ public final class WindmillLODRenderManager {
 	// Geometry
 
 	private static List<DhApiRenderableBox> getWindmillCrossBoxesForEntry(WindmillLODEntry entry, float rotationAngle) {
-		var bladeThickness = getBladeThickness();
 		var bladeColor = getBladeColor();
 		var bladeMaterial = getBladeMaterial();
 
-		return WindmillLODTransformUtil.makeWindmillCrossBoxes(entry, rotationAngle, bladeThickness, bladeColor, bladeMaterial);
-	}
-
-	private static float getBladeThickness() {
-		return Mod.CONFIG.windmillBladeThickness;
+		return WindmillLODBoxUtil.makeWindmillBladeBoxes(entry, bladeColor, bladeMaterial, rotationAngle);
 	}
 
 	private static Color getBladeColor() {
@@ -203,6 +195,7 @@ public final class WindmillLODRenderManager {
 		for (var index = 0; index < updatedBoxes.size(); index++) {
 			var updatedBox = updatedBoxes.get(index);
 			var existingBox = renderGroup.get(index);
+
 			existingBox.minPos = updatedBox.minPos;
 			existingBox.maxPos = updatedBox.maxPos;
 			existingBox.color = updatedBox.color;
@@ -354,7 +347,6 @@ public final class WindmillLODRenderManager {
 		}
 
 		var renderAngle = entry.rotationAngle + rotationSpeed * partialTicks;
-
 		return wrapDegrees(renderAngle);
 	}
 

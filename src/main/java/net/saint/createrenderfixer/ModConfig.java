@@ -43,16 +43,16 @@ public class ModConfig implements ConfigData {
 	// LODs (Windmill)
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Scale factor used to create an LOD representation of windmill blades. (Default: 0.875)")
+	@Comment("Scale factor applied to calculated blade length derived from bounds for windmill LODs. (Default: 0.875)")
 	public float windmillBladeLengthFactor = 0.875f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Width factor applied to the blade depth when constructing LOD boxes. (Default: 1.1)")
-	public float windmillBladeWidthFactor = 1.1f;
+	@Comment("Scale factor applied to estimated blade width derived from bounds to sail block ratio for windmill LODs. (Default: 1.0)")
+	public float windmillBladeWidthFactor = 1.0f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Thickness in blocks used when constructing windmill blade LOD boxes. (Default: 0.5)")
-	public float windmillBladeThicknessFactor = 0.5f;
+	@Comment("Scale factor applied to estimated depth constructing windmill blade LOD boxes. (Default: 0.5)")
+	public float windmillBladeDepthFactor = 0.5f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Minimum blade length used when constructing LOD boxes. (Default: 1.0)")
@@ -71,8 +71,8 @@ public class ModConfig implements ConfigData {
 	public int windmillBladeSegmentCountMaximum = 24;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Maximum thickness scale multiplier used during blade rotation. (Default: 1.4)")
-	public float windmillBladeRotationThicknessScaleMaximum = 1.4f;
+	@Comment("Maximum volume scale factor used during blade rotation to compensate for perceived volume loss. (Default: 1.375)")
+	public float windmillBladeRotationVolumeScale = 1.375f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Blade color as comma-separated red, green, and blue values. (Default: 250, 250, 250)")
@@ -87,12 +87,12 @@ public class ModConfig implements ConfigData {
 	public float windmillRotationAngleRenderThreshold = 0.5f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Tick interval to synchronize active windmill LODs entries from server to client. (Default: 20)")
-	public int windmillSyncTickInterval = 20;
+	@Comment("Tick interval to synchronize active windmill LODs entries from server to client. (Default: 50)")
+	public int windmillSyncTickInterval = 50;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Maximum rotation angle delta between server expectation and client actual to cause override. (Default: 5.0)")
-	public float windmillRotationAngleSyncThreshold = 5.0f;
+	@Comment("Maximum rotation angle delta between server expectation and client actual to cause override. (Default: 1.0)")
+	public float windmillRotationAngleSyncThreshold = 1.0f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Maximum rotation speed delta between server expectation and client actual to cause override. (Default: 0.05)")
