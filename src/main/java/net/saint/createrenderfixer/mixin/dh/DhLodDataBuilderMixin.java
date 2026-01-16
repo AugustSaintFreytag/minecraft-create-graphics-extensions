@@ -75,7 +75,8 @@ public abstract class DhLodDataBuilderMixin {
 			var dimensionId = levelWrapper.getDhIdentifier();
 
 			if (CALL_LOG_TALLY.getAndIncrement() == 0) {
-				Mod.LOGGER.info("DH contraption chunk bake redirect active for {}.", dimensionId);
+				Mod.LOGGER.info("Set up DH contraption chunk building redirect in dimension '{}' for contraption block injection.",
+						dimensionId);
 			}
 
 			var chunkPosition = chunkWrapper.getChunkPos();
@@ -96,7 +97,7 @@ public abstract class DhLodDataBuilderMixin {
 
 					return (IBlockStateWrapper) stateWrapper;
 				} catch (Exception exception) {
-					Mod.LOGGER.debug("DH contraption inject failed at {}/{}/{} in {}", worldX, relY, worldZ, dimensionId, exception);
+					Mod.LOGGER.debug("Could not inject DH contraption at {}/{}/{} in {}", worldX, relY, worldZ, dimensionId, exception);
 				}
 			}
 		}

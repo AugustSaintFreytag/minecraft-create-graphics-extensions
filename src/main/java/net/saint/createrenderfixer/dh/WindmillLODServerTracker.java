@@ -130,9 +130,6 @@ public final class WindmillLODServerTracker {
 
 		WindmillLODSyncUtil.broadcastRemovalPacket(server, entry.contraptionId);
 
-		if (Mod.CONFIG.enableLogging) {
-			Mod.LOGGER.info("Removed stale windmill LOD entry for contraption '{}' due to '{}'.", entry.contraptionId, reason);
-		}
 	}
 
 	// Overrides
@@ -157,6 +154,7 @@ public final class WindmillLODServerTracker {
 		}
 
 		return updatedCount;
+		Mod.LOGGER.info("Removed stale windmill LOD entry for contraption '{}' due to '{}'.", entry.contraptionId, reason);
 	}
 
 	// Synchronization
@@ -167,6 +165,7 @@ public final class WindmillLODServerTracker {
 		entry.rotationAngle = rotationAngle;
 		entry.lastSynchronizationTick = currentTick;
 
+		Mod.LOGGER.info("Updating entry for contraption '{}' due to '{}' and broadcasting to all clients.", entry.contraptionId, reason);
 		WindmillLODSyncUtil.broadcastUpdatePacket(server, entry);
 	}
 
@@ -265,10 +264,8 @@ public final class WindmillLODServerTracker {
 			windmillBearing.setAngle(rotationAngle);
 			accessor.setPreviousAngle(rotationAngle);
 
-			if (Mod.CONFIG.enableLogging) {
-				Mod.LOGGER.info("Applied windmill bearing contraption '{}' rotation angle {} -> {} due to '{}'.", entry.contraptionId,
-						previousAngle, rotationAngle, reason);
-			}
+			Mod.LOGGER.info("Applied windmill bearing contraption '{}' rotation angle {} -> {} due to '{}'.", entry.contraptionId,
+					previousAngle, rotationAngle, reason);
 
 			return;
 		}

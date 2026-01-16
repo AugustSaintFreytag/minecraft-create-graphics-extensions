@@ -341,7 +341,6 @@ public final class ContraptionBlockRegistry {
 		}
 
 		notifyChunksDirty(removed.dimensionId, removed.chunks.keySet());
-
 		return windmillRemoved;
 	}
 
