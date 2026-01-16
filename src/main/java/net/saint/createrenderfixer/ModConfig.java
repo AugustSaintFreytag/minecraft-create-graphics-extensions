@@ -43,16 +43,16 @@ public class ModConfig implements ConfigData {
 	// LODs (Windmill)
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Scale factor used to create an LOD representation of windmill blades. (Default: 1.0)")
-	public float windmillBladeLengthScale = 1.0f;
+	@Comment("Scale factor used to create an LOD representation of windmill blades. (Default: 0.875)")
+	public float windmillBladeLengthFactor = 0.875f;
+
+	@ConfigEntry.Category("lods-windmill")
+	@Comment("Width factor applied to the blade depth when constructing LOD boxes. (Default: 1.1)")
+	public float windmillBladeWidthFactor = 1.1f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Thickness in blocks used when constructing windmill blade LOD boxes. (Default: 0.5)")
-	public float windmillBladeThickness = 0.5f;
-
-	@ConfigEntry.Category("lods-windmill")
-	@Comment("Width factor applied to the blade depth when constructing LOD boxes. (Default: 0.5)")
-	public float windmillBladeWidthFactor = 0.5f;
+	public float windmillBladeThicknessFactor = 0.5f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Minimum blade length used when constructing LOD boxes. (Default: 1.0)")
@@ -61,10 +61,6 @@ public class ModConfig implements ConfigData {
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Target blade segment length when constructing LOD boxes. (Default: 1.0)")
 	public float windmillBladeSegmentTargetLength = 1.0f;
-
-	@ConfigEntry.Category("lods-windmill")
-	@Comment("Blade length trimmed off each axis before segment generation. (Default: 2.0)")
-	public float windmillBladeLengthTrim = 2.0f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Minimum blade segment count used when constructing LOD boxes. (Default: 6)")
@@ -88,7 +84,7 @@ public class ModConfig implements ConfigData {
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Minimum rotation delta in degrees before LOD boxes update. (Default: 0.5)")
-	public float windmillRotationUpdateThreshold = 0.5f;
+	public float windmillRotationAngleRenderThreshold = 0.5f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Tick interval to synchronize active windmill LODs entries from server to client. (Default: 20)")

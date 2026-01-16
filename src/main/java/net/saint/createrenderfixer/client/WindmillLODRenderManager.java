@@ -131,7 +131,7 @@ public final class WindmillLODRenderManager {
 
 		if (lastAngle != null) {
 			var rotationDelta = getRotationDeltaForAngles(lastAngle, renderAngle);
-			var rotationUpdateThreshold = Mod.CONFIG.windmillRotationUpdateThreshold;
+			var rotationUpdateThreshold = Mod.CONFIG.windmillRotationAngleRenderThreshold;
 
 			if (rotationDelta < rotationUpdateThreshold) {
 				return;
