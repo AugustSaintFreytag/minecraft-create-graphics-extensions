@@ -424,7 +424,13 @@ public final class ContraptionBlockRegistry {
 			return null;
 		}
 
-		var bounds = entity.getContraption().bounds;
+		var contraption = entity.getContraption();
+
+		if (contraption == null) {
+			return null;
+		}
+
+		var bounds = contraption.bounds;
 
 		if (bounds == null) {
 			return null;
