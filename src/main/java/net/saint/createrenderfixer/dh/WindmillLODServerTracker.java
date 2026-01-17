@@ -138,8 +138,9 @@ public final class WindmillLODServerTracker {
 		entry.rotationAngle = rotationAngle;
 		entry.lastSynchronizationTick = currentTick;
 
-		Mod.LOGGER.info("Updating entry for contraption '{}' due to '{}' and broadcasting to all clients.", entry.contraptionId, reason);
-		WindmillLODSyncUtil.broadcastUpdatePacket(server, entry);
+		Mod.LOGGER.info("Updated entry for contraption '{}' (speed {}, angle {}, last tick {}) due to '{}'.", entry.contraptionId,
+				rotationSpeed, rotationAngle, currentTick, reason);
+		WindmillLODSyncUtil.sendUpdatePacketToAllPlayers(server, entry);
 	}
 
 	/**
