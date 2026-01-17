@@ -10,14 +10,14 @@ public final class ContraptionPersistencyUtil {
 	// Load
 
 	public static void load(MinecraftServer server) {
-		var state = CreateLodPersistentData.loadFromServer(server);
+		var state = ContraptionLODPersistentData.loadFromServer(server);
 		state.applyToRegistries();
 	}
 
 	// Save
 
 	public static void save(MinecraftServer server) {
-		var state = CreateLodPersistentData.loadFromServer(server);
+		var state = ContraptionLODPersistentData.loadFromServer(server);
 		state.captureFromRegistries();
 	}
 
