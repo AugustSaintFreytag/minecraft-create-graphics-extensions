@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "create-ge",
+	"id": "create-grex",
 	"version": "${version}",
 	"name": "Create Graphics Extensions",
 	"description": "Extensions and rendering optimizations for Create, Flywheel, and companion mods.",
@@ -12,21 +12,21 @@
 		"sources": "https://github.com/AugustSaintFreytag/minecraft-create-graphics-extensions"
 	},
 	"license": "MIT",
-	"icon": "assets/create-render-fixer/icon.png",
+	"icon": "assets/create-grex/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.saint.createge.Mod"
+			"net.saint.creategrex.Mod"
 		],
 		"client": [
-			"net.saint.createge.ModClient"
+			"net.saint.creategrex.ModClient"
 		],
 		"modmenu": [
-			"net.saint.createge.ModMenu"
+			"net.saint.creategrex.ModMenu"
 		]
 	},
 	"mixins": [
-		"create-graphics-extensions.mixins.json"
+		"create-grex.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.14",
