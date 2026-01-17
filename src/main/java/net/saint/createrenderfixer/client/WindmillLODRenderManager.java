@@ -73,8 +73,9 @@ public final class WindmillLODRenderManager {
 				continue;
 			}
 
-			var renderAngle = updateRenderAngleForEntry(level, entry, partialTicks);
 			activeIdentifiers.add(entry.contraptionId);
+
+			var renderAngle = updateRenderAngleForEntry(level, entry, partialTicks);
 			var renderGroup = getOrCreateRenderGroup(renderFactory, renderRegister, entry);
 
 			if (renderGroup == null) {
@@ -347,6 +348,8 @@ public final class WindmillLODRenderManager {
 		}
 
 		var renderAngle = entry.rotationAngle + rotationSpeed * partialTicks;
+		renderAngle += Mod.CONFIG.windmillBladeRotationAngleOffset;
+
 		return wrapDegrees(renderAngle);
 	}
 

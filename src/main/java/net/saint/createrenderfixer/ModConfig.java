@@ -95,6 +95,10 @@ public class ModConfig implements ConfigData {
 	public String windmillBladeMaterial = "WOOD";
 
 	@ConfigEntry.Category("lods-windmill")
+	@Comment("Fixed offset added to windmill blade LOD rotation angle to accommodate for visual difference in representation. (Default: 0.0)")
+	public float windmillBladeRotationAngleOffset = 0.0f;
+
+	@ConfigEntry.Category("lods-windmill")
 	@Comment("Server-side tick interval to manage active windmill LODs entries, process updates, and broadcast entries to players in range. (Default: 20)")
 	public int windmillTickInterval = 20;
 
