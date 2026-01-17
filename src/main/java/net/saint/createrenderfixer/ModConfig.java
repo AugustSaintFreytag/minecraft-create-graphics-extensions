@@ -43,24 +43,24 @@ public class ModConfig implements ConfigData {
 	// LODs (Windmill)
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Scale factor applied to calculated blade length derived from bounds for windmill LODs. (Default: 0.875)")
-	public float windmillBladeLengthFactor = 0.875f;
+	@Comment("Scale factor applied to calculated blade length derived from bounds for windmill LODs. (Default: 0.85)")
+	public float windmillBladeLengthFactor = 0.85f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Scale factor applied to estimated blade width derived from bounds to sail block ratio for windmill LODs. (Default: 1.0)")
-	public float windmillBladeWidthFactor = 1.0f;
+	@Comment("Scale factor applied to estimated blade width derived from bounds to sail block ratio for windmill LODs. (Default: 0.65)")
+	public float windmillBladeWidthFactor = 0.65f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Scale factor used to calculate blade width compensation depending on windmill size. (Default: 0.01)")
 	public float windmillBladeSizeWidthFactor = 0.01f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Base scale factor trim used to calculate blade width compensation depending on windmill size. (Default: 0.65)")
-	public float windmillBladeSizeWidthTrim = 0.65f;
+	@Comment("Base scale factor trim used to calculate blade width compensation depending on windmill size. (Default: 0.45)")
+	public float windmillBladeSizeWidthTrim = 0.45f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Scale factor applied to estimated depth constructing windmill blade LOD boxes. (Default: 0.5)")
-	public float windmillBladeDepthFactor = 0.5f;
+	@Comment("Scale factor applied to estimated depth constructing windmill blade LOD boxes. (Default: 0.25)")
+	public float windmillBladeDepthFactor = 0.25f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Minimum blade length used when constructing LOD boxes. (Default: 1.0)")
@@ -79,24 +79,22 @@ public class ModConfig implements ConfigData {
 	public int windmillBladeSegmentCountMaximum = 24;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Factor applied to blade volume to compensate for perceived volume loss during rotation.")
-	public float windmillBladeRotationVolumeScale = 1.375f;
+	@Comment("Factor applied to blade volume to compensate for perceived volume loss during rotation. (Default: 2.15)")
+	public float windmillBladeRotationVolumeScale = 2.15f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Factor applied to blade volume based on blade size to compensate for perceived volume loss during rotation.")
-	public float windmillBladeRotationVolumeScaleSizeFactor = 0.1f;
+	@Comment("Factor applied to blade volume based on blade size to compensate for perceived volume loss during rotation. (Default: -0.075)")
+	public float windmillBladeRotationVolumeScaleSizeFactor = -0.075f;
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Blade color as comma-separated red, green, and blue values. (Default: 250, 250, 250)")
-	public String windmillBladeColor = "250, 250, 250";
+	@Comment("Blade color as comma-separated red, green, and blue values. (Default: 160, 138, 105)")
+	public String windmillBladeColor = "160, 138, 105";
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Blade material used by Distant Horizons. Options: UNKNOWN, LEAVES, STONE, WOOD, METAL, DIRT, LAVA, DEEPSLATE, SNOW, SAND, TERRACOTTA, NETHER_STONE, WATER, GRASS, AIR, ILLUMINATED. (Default: WOOD)")
 	public String windmillBladeMaterial = "WOOD";
 
 	@ConfigEntry.Category("lods-windmill")
-	@Comment("Minimum rotation delta in degrees before LOD boxes update. (Default: 0.5)")
-	public float windmillRotationAngleRenderThreshold = 0.5f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Tick interval to synchronize active windmill LODs entries from server to client. (Default: 50)")
@@ -109,6 +107,10 @@ public class ModConfig implements ConfigData {
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Maximum rotation speed delta between server expectation and client actual to cause override. (Default: 0.05)")
 	public float windmillRotationSpeedSyncThreshold = 0.05f;
+
+	@ConfigEntry.Category("lods-windmill")
+	@Comment("Minimum rotation delta in degrees before LOD boxes update. (Default: 0.5)")
+	public float windmillRotationAngleRenderThreshold = 0.5f;
 
 	@ConfigEntry.Category("lods-windmill")
 	@Comment("Maximum render distance in blocks for windmill LODs. (Default: 2048)")
