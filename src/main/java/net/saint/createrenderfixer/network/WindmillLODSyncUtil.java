@@ -108,7 +108,6 @@ public final class WindmillLODSyncUtil {
 			return;
 		}
 
-		var numberOfPacketsSent = new AtomicInteger();
 
 		for (var player : server.getPlayerList().getPlayers()) {
 			var playerDistance = getDistanceForPlayerToEntry(player, entry);
@@ -118,16 +117,14 @@ public final class WindmillLODSyncUtil {
 				continue;
 			}
 
+			Mod.LOGGER.info("Sending paced windmill LOD entry to player '{}' ({}), distance {} chunks, interval {} ticks.",
+					player.getName(), player.getUUID(), playerDistance, minTicksElapsed);
+
 			var buffer = PacketByteBufs.create();
 			writeEntry(buffer, entry);
 			ServerPlayNetworking.send(player, UPDATE_PACKET, buffer);
 
-			numberOfPacketsSent.getAndIncrement();
 			touchBroadcastForPlayer(player);
-		}
-
-		if (numberOfPacketsSent.get() > 0) {
-			Mod.LOGGER.info("Sent paced windmill LOD entry to {} player(s).", numberOfPacketsSent.get());
 		}
 	}
 
