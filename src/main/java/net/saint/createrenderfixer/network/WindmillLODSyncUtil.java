@@ -197,8 +197,9 @@ public final class WindmillLODSyncUtil {
 		var effectiveChunkDistance = Math.min(offsetChunkDistance, maxChunkRenderDistance);
 		var numberOfPacingSteps = (int) Math.ceil(effectiveChunkDistance / Mod.CONFIG.windmillSyncDistanceStride);
 		var pacingFactor = 1 + numberOfPacingSteps;
+		var pacingTickInterval = baselineTickInterval * pacingFactor;
 
-		return baselineTickInterval * pacingFactor;
+		return pacingTickInterval;
 	}
 
 	// Read
