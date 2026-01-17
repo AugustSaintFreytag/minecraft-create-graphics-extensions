@@ -1,32 +1,32 @@
 {
 	"schemaVersion": 1,
-	"id": "create-render-fixer",
+	"id": "create-ge",
 	"version": "${version}",
-	"name": "Create Render Fixer",
-	"description": "Fixes various issues and optimizes block rendering in Create and Create: Deco.",
+	"name": "Create Graphics Extensions",
+	"description": "Extensions and rendering optimizations for Create, Flywheel, and companion mods.",
 	"authors": [
 		"Saint"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/AugustSaintFreytag",
+		"sources": "https://github.com/AugustSaintFreytag/minecraft-create-graphics-extensions"
 	},
 	"license": "MIT",
 	"icon": "assets/create-render-fixer/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.saint.createrenderfixer.Mod"
+			"net.saint.createge.Mod"
 		],
 		"client": [
-			"net.saint.createrenderfixer.ModClient"
+			"net.saint.createge.ModClient"
 		],
 		"modmenu": [
-			"net.saint.createrenderfixer.ModMenu"
+			"net.saint.createge.ModMenu"
 		]
 	},
 	"mixins": [
-		"create-render-fixer.mixins.json"
+		"create-graphics-extensions.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.14",

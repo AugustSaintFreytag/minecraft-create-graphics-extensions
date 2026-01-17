@@ -1,8 +1,8 @@
 {
 	"required": true,
-	"package": "net.saint.createrenderfixer.mixin",
+	"package": "net.saint.createge.mixin",
 	"compatibilityLevel": "JAVA_17",
-	"plugin": "net.saint.createrenderfixer.ModMixinPlugin",
+	"plugin": "net.saint.createge.ModMixinPlugin",
 	"mixins": [
 		"create.AbstractContraptionEntityMixin",
 		"create.ControlledContraptionEntityAccessor",

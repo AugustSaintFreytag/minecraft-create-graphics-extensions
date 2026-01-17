@@ -27,8 +27,8 @@ public class Mod implements ModInitializer {
 
 	// Configuration
 
-	public static final String MOD_ID = "create-render-fixer";
-	public static final String MOD_NAME = "Create Render Fixer";
+	public static final String MOD_ID = "create-ge";
+	public static final String MOD_NAME = "Create Graphics Extensions";
 
 	// References
 
