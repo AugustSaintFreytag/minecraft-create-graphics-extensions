@@ -5,7 +5,7 @@
 - Use `var` where possible for declarations.
 - Prefer private `getXForY` functions over ternary expressions.
 - Apply appropriate spacing and empty lines for visual grouping.
-- Insert an empty line before return statements if there is more than one preceding line.
+- Insert an empty line before return statements if there is one or more preceding line in the same block.
 - Use sectioning comments if a file contains more than a few functions.
 - Encoding/decoding logic goes into the data model.
 - After implementing a change, consider the ways it might not work.
