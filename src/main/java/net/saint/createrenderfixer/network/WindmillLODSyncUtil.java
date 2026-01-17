@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -108,10 +107,12 @@ public final class WindmillLODSyncUtil {
 			return;
 		}
 
+		var playerList = server.getPlayerList();
+		var viewDistance = playerList.getViewDistance();
 
-		for (var player : server.getPlayerList().getPlayers()) {
+		for (var player : playerList.getPlayers()) {
 			var playerDistance = getDistanceForPlayerToEntry(player, entry);
-			var minTicksElapsed = getTickPacingForPlayerDistance(playerDistance);
+			var minTicksElapsed = getTickPacingForPlayerDistance(playerDistance, viewDistance);
 
 			if (!shouldSendPacedUpdateToPlayer(player, minTicksElapsed)) {
 				continue;
@@ -179,24 +180,25 @@ public final class WindmillLODSyncUtil {
 		return distance;
 	}
 
-	private static int getTickPacingForPlayerDistance(double distanceBlocks) {
-		var baselineTickInterval = Math.max(1, Mod.CONFIG.windmillTickInterval);
-		var baselineChunkDistanceMaximum = 28.0;
-		var chunkDistanceStep = 16.0;
-		var distanceChunks = Math.max(0.0, distanceBlocks / chunkDistanceStep);
-		var maximumRenderDistanceBlocks = Math.max(0.0, Mod.CONFIG.windmillMaximumRenderDistance);
-		var maximumRenderDistanceChunks = maximumRenderDistanceBlocks / chunkDistanceStep;
+	private static int getTickPacingForPlayerDistance(double distanceBlocks, int viewDistance) {
+		// Baseline tick interval to sync server-side state with a client.
+		var baselineTickInterval = Math.max(1, Mod.CONFIG.windmillSyncBaseTickInterval);
+		var maxChunkRenderDistance = Math.max(0.0, Mod.CONFIG.windmillMaximumRenderDistance / 16.0);
 
-		if (distanceChunks <= baselineChunkDistanceMaximum || maximumRenderDistanceChunks <= baselineChunkDistanceMaximum) {
-			return baselineTickInterval;
-		}
+		// The current distance between the client and the LOD entity.
+		var chunkDistance = Math.max(0.0, distanceBlocks / 16.0);
 
-		var cappedDistanceChunks = Math.min(distanceChunks, maximumRenderDistanceChunks);
-		var extraChunkDistance = cappedDistanceChunks - baselineChunkDistanceMaximum;
-		var numberOfExtraSteps = (int) Math.ceil(extraChunkDistance / chunkDistanceStep);
-		var pacingMultiplier = numberOfExtraSteps + 1;
+		// Apply view distance offset to only start pacing after LOD has actually become visible.
+		var offsetChunkDistance = Math.max(0.0, chunkDistance - viewDistance);
 
-		return baselineTickInterval * pacingMultiplier;
+		// For every stride chunks of effective distance, increase pacing by one unit.
+		// Example: 20 ticks more per 16 chunks.
+
+		var effectiveChunkDistance = Math.min(offsetChunkDistance, maxChunkRenderDistance);
+		var numberOfPacingSteps = (int) Math.ceil(effectiveChunkDistance / Mod.CONFIG.windmillSyncDistanceStride);
+		var pacingFactor = 1 + numberOfPacingSteps;
+
+		return baselineTickInterval * pacingFactor;
 	}
 
 	// Read
