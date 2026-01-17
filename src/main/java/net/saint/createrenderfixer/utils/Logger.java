@@ -11,6 +11,8 @@ public final class Logger {
 	private final org.apache.logging.log4j.Logger delegate;
 	private final String prefix;
 
+	private String environment;
+
 	// Init
 
 	private Logger(String name) {
@@ -26,31 +28,50 @@ public final class Logger {
 		return new Logger(type.getSimpleName());
 	}
 
+	// Mutation
+
+	public void setAsClient() {
+		this.environment = "[Client]";
+	}
+
+	public void setAsServer() {
+		this.environment = "[Server]";
+	}
+
 	// Logging
 
 	public void trace(String message, Object... params) {
-		withEnabledLogging(() -> delegate.trace(prefix + message, params));
-
+		withEnabledLogging(() -> delegate.trace(getPrefix() + message, params));
 	}
 
 	public void debug(String message, Object... params) {
-		withEnabledLogging(() -> delegate.debug(prefix + message, params));
+		withEnabledLogging(() -> delegate.debug(getPrefix() + message, params));
 	}
 
 	public void info(String message, Object... params) {
-		withEnabledLogging(() -> delegate.info(prefix + message, params));
+		withEnabledLogging(() -> delegate.info(getPrefix() + message, params));
 	}
 
 	public void warn(String message, Object... params) {
-		withEnabledLogging(() -> delegate.warn(prefix + message, params));
+		withEnabledLogging(() -> delegate.warn(getPrefix() + message, params));
 	}
 
 	public void error(String message, Object... params) {
-		withEnabledLogging(() -> delegate.error(prefix + message, params));
+		withEnabledLogging(() -> delegate.error(getPrefix() + message, params));
 	}
 
 	public void error(String message, Throwable throwable) {
-		withEnabledLogging(() -> delegate.error(prefix + message, throwable));
+		withEnabledLogging(() -> delegate.error(getPrefix() + message, throwable));
+	}
+
+	// Content
+
+	private String getPrefix() {
+		if (this.environment == null) {
+			return this.prefix;
+		}
+
+		return this.prefix + " " + this.environment;
 	}
 
 	// Check
@@ -66,4 +87,5 @@ public final class Logger {
 
 		action.run();
 	}
+
 }

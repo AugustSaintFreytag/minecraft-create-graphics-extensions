@@ -11,10 +11,14 @@ public final class ModClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		WindmillLODSyncUtil.initClient();
+		// Logger
 
-		if (!FabricLoader.getInstance().isModLoaded("distanthorizons")) {
-			return;
+		Mod.LOGGER.setAsClient();
+
+		// Distant Horizons
+
+		if (FabricLoader.getInstance().isModLoaded("distanthorizons")) {
+			initializeDistantHorizonsInterop();
 		}
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {

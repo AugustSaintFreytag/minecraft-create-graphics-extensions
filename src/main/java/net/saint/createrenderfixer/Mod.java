@@ -32,14 +32,21 @@ public class Mod implements ModInitializer {
 
 	// References
 
+	public static final Logger LOGGER = Logger.create(MOD_NAME);
+
 	public static ModConfig CONFIG;
 
-	public static final Logger LOGGER = Logger.create(MOD_NAME);
 
 	// Init
 
 	@Override
 	public void onInitialize() {
+		// Logger
+
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+			LOGGER.setAsServer();
+		});
+
 		// Config
 
 		AutoConfig.register(ModConfig.class, JanksonConfigSerializer::new);
