@@ -7,7 +7,6 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiChunkPr
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 
 import net.saint.createrenderfixer.Mod;
-import net.saint.createrenderfixer.ModConfig;
 
 /**
  * Injects contraption blocks into DH's chunk processing pipeline.
@@ -23,7 +22,7 @@ public final class DhChunkProcessingHandler extends DhApiChunkProcessingEvent {
 			DhApi.events.bind(DhApiChunkProcessingEvent.class, new DhChunkProcessingHandler());
 			Mod.LOGGER.info("Attached DH chunk processing handler for contraptions.");
 		} catch (Throwable throwable) {
-			Mod.LOGGER.debug("Could not bind DH chunk processing handler for contraptions.", throwable);
+			Mod.LOGGER.info("Could not bind DH chunk processing handler for contraptions.", throwable);
 		}
 	}
 
@@ -33,7 +32,7 @@ public final class DhChunkProcessingHandler extends DhApiChunkProcessingEvent {
 			return;
 		}
 
-		if (!ModConfig.injectContraptionLODs()) {
+		if (!Mod.CONFIG.injectContraptionLODs) {
 			return;
 		}
 
@@ -75,7 +74,7 @@ public final class DhChunkProcessingHandler extends DhApiChunkProcessingEvent {
 						dimensionId, override.state().getBlock().getDescriptionId(), override.biomeId());
 			}
 		} catch (Exception exception) {
-			Mod.LOGGER.debug("Failed to wrap contraption state for DH override at x{}, y{}, z{}.", worldX, worldY, worldZ, exception);
+			Mod.LOGGER.info("Failed to wrap contraption state for DH override at x{}, y{}, z{}.", worldX, worldY, worldZ, exception);
 		}
 	}
 }

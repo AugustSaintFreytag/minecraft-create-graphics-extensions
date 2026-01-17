@@ -13,6 +13,7 @@ import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiChunkModifiedEvent;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
+import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 
@@ -73,9 +74,6 @@ public final class ContraptionBlockRegistry {
 		}
 	}
 
-	private record PlaneSize(float width, float height) {
-	}
-
 	private record WindmillRegistrationData(BlockPos controllerPosition, WindmillBearingBlockEntity windmillBearing,
 			Direction.Axis rotationAxis, Direction bearingDirection, AABB bounds) {
 	}
@@ -88,10 +86,7 @@ public final class ContraptionBlockRegistry {
 	// Registration
 
 	public static void register(AbstractContraptionEntity entity) {
-		if (!(entity.level() instanceof ServerLevel serverLevel)) {
-			return;
-		}
-
+		var serverLevel = (ServerLevel) entity.level();
 		var contraption = entity.getContraption();
 
 		if (contraption == null || contraption.getBlocks().isEmpty()) {
@@ -104,20 +99,19 @@ public final class ContraptionBlockRegistry {
 			return;
 		}
 
+		var anchorPosition = contraption.anchor;
 		var dimensionId = serverLevel.dimension().location().toString();
 		var entry = new ContraptionEntry(dimensionId);
-		var anchorPosition = contraption.anchor;
 
 		if (anchorPosition == null) {
 			Mod.LOGGER.warn("Contraption '{}' has no anchor block position and can not be registered.", contraptionId);
-
 			return;
 		}
 
 		var windmillData = resolveWindmillRegistrationData(entity, serverLevel);
 
 		if (windmillData != null) {
-			registerWindmillEntry(contraptionId, serverLevel, dimensionId, windmillData);
+			registerWindmillEntry(serverLevel, dimensionId, contraptionId, contraption, windmillData, false);
 			removeStoredBlocksForWindmill(dimensionId, anchorPosition, windmillData.bounds());
 
 			return;
@@ -154,7 +148,7 @@ public final class ContraptionBlockRegistry {
 		var windmillRemoved = unregisterInternal(contraptionIdentifier);
 
 		if (windmillRemoved) {
-			WindmillLODSyncUtil.broadcastRemovalPacket(serverLevel.getServer(), contraptionIdentifier);
+			WindmillLODSyncUtil.sendRemovalPacketToAllPlayers(serverLevel.getServer(), contraptionIdentifier);
 			Mod.LOGGER.info("Unregistered windmill LOD entry for contraption '{}'.", contraptionIdentifier);
 		}
 	}
@@ -166,7 +160,50 @@ public final class ContraptionBlockRegistry {
 	public static void clearForWorld(String dimensionId) {
 		BY_DIMENSION.remove(dimensionId);
 		CONTRAPTIONS.entrySet().removeIf(e -> e.getValue().dimensionId.equals(dimensionId));
-		WindmillLODManager.clearForWorld(dimensionId);
+
+		Mod.WINDMILL_LOD_MANAGER.clearForWorld(dimensionId);
+	}
+
+	// Debug
+
+	public static int reregisterLoadedWindmillEntities(ServerLevel level) {
+		if (level == null) {
+			return 0;
+		}
+
+		var updatedCount = 0;
+
+		for (var entity : level.getAllEntities()) {
+			if (!(entity instanceof AbstractContraptionEntity contraptionEntity)) {
+				continue;
+			}
+
+			var windmillData = resolveWindmillRegistrationData(contraptionEntity, level);
+
+			if (windmillData == null) {
+				continue;
+			}
+
+			var contraption = contraptionEntity.getContraption();
+
+			if (contraption == null || contraption.getBlocks().isEmpty()) {
+				continue;
+			}
+
+			var dimensionId = level.dimension().location().toString();
+			var contraptionId = contraptionEntity.getUUID();
+			var anchorPosition = contraption.anchor;
+
+			registerWindmillEntry(level, dimensionId, contraptionId, contraption, windmillData, true);
+
+			if (anchorPosition != null) {
+				removeStoredBlocksForWindmill(dimensionId, anchorPosition, windmillData.bounds());
+			}
+
+			updatedCount++;
+		}
+
+		return updatedCount;
 	}
 
 	@Nullable
@@ -291,31 +328,49 @@ public final class ContraptionBlockRegistry {
 
 	// Utility
 
-	private static void registerWindmillEntry(UUID contraptionIdentifier, ServerLevel serverLevel, String dimensionIdentifier,
-			WindmillRegistrationData windmillData) {
-		if (WindmillLODManager.find(contraptionIdentifier) != null) {
-			Mod.LOGGER.info("Windmill contraption '{}' with registered LOD entry loading back in.", contraptionIdentifier);
-			return;
+	private static boolean registerWindmillEntry(ServerLevel serverLevel, String dimensionIdentifier, UUID id, Contraption contraption,
+			WindmillRegistrationData windmillData, boolean force) {
+		var existingEntry = Mod.WINDMILL_LOD_MANAGER.find(id);
+
+		if (existingEntry != null && !force) {
+			Mod.LOGGER.info("Windmill contraption '{}' with registered LOD entry loading back in.", id);
+
+			return false;
 		}
 
-		var planeSize = resolvePlaneSize(windmillData.bounds(), windmillData.rotationAxis());
-		var rotationSpeed = windmillData.windmillBearing().getAngularSpeed();
-		var rotationAngle = windmillData.windmillBearing().getInterpolatedAngle(1.0F);
-		var lastSynchronizationTick = serverLevel.getGameTime();
+		if (existingEntry != null) {
+			Mod.WINDMILL_LOD_MANAGER.unregister(id);
+		}
+
+		var windmillBearing = windmillData.windmillBearing();
+		var rotationSpeed = windmillBearing.getAngularSpeed();
+		var rotationAngle = windmillBearing.getInterpolatedAngle(1.0F);
 		var bearingDirection = windmillData.bearingDirection();
-		var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, windmillData.controllerPosition(),
-				windmillData.rotationAxis(), bearingDirection, planeSize.width(), planeSize.height(), rotationSpeed, rotationAngle,
-				lastSynchronizationTick);
 
-		WindmillLODManager.register(entry);
-		WindmillLODSyncUtil.broadcastUpdatePacket(serverLevel.getServer(), entry);
+		var planeSize = WindmillLODAnalysisUtil.getPlaneSizeForContraptionBounds(windmillData.rotationAxis(), windmillData.bounds());
+		var bladeGeometry = WindmillLODAnalysisUtil.getWindmillBladeGeometry(contraption, windmillData.rotationAxis(),
+				windmillData.bounds());
 
-		Mod.LOGGER.info("Registered windmill LOD entry for contraption '{}' in '{}'.", contraptionIdentifier, dimensionIdentifier);
+		var lastSynchronizationTick = serverLevel.getGameTime();
+		var tickRegistered = lastSynchronizationTick;
+
+		var entry = new WindmillLODEntry(id, dimensionIdentifier, windmillData.controllerPosition(), windmillData.rotationAxis(),
+				bearingDirection, planeSize, bladeGeometry, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
+
+		Mod.WINDMILL_LOD_MANAGER.register(entry);
+
+		WindmillLODSyncUtil.sendUpdatePacketToAllPlayers(serverLevel.getServer(), entry);
+
+		Mod.LOGGER.info("Registered {} windmill LOD entry for contraption '{}' in '{}' (blade size l:'{}', w:'{}', d:'{}', s:'{}').", id,
+				dimensionIdentifier, bladeGeometry.length(), bladeGeometry.width(), bladeGeometry.depth(),
+				bladeGeometry.numberOfSegments());
+
+		return true;
 	}
 
 	private static boolean unregisterInternal(UUID contraptionId) {
 		var removed = CONTRAPTIONS.remove(contraptionId);
-		var windmillRemoved = WindmillLODManager.unregister(contraptionId);
+		var windmillRemoved = Mod.WINDMILL_LOD_MANAGER.unregister(contraptionId);
 
 		if (removed == null) {
 			return windmillRemoved;
@@ -342,20 +397,7 @@ public final class ContraptionBlockRegistry {
 		}
 
 		notifyChunksDirty(removed.dimensionId, removed.chunks.keySet());
-
 		return windmillRemoved;
-	}
-
-	private static PlaneSize resolvePlaneSize(AABB bounds, Direction.Axis rotationAxis) {
-		var sizeX = (float) bounds.getXsize();
-		var sizeY = (float) bounds.getYsize();
-		var sizeZ = (float) bounds.getZsize();
-
-		return switch (rotationAxis) {
-		case X -> new PlaneSize(sizeZ, sizeY);
-		case Y -> new PlaneSize(sizeX, sizeZ);
-		case Z -> new PlaneSize(sizeX, sizeY);
-		};
 	}
 
 	private static void removeStoredBlocksForWindmill(String dimensionId, BlockPos anchorPosition, AABB bounds) {
@@ -433,7 +475,13 @@ public final class ContraptionBlockRegistry {
 			return null;
 		}
 
-		var bounds = entity.getContraption().bounds;
+		var contraption = entity.getContraption();
+
+		if (contraption == null) {
+			return null;
+		}
+
+		var bounds = contraption.bounds;
 
 		if (bounds == null) {
 			return null;
