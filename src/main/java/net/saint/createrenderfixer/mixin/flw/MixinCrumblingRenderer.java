@@ -24,7 +24,8 @@ public abstract class MixinCrumblingRenderer {
 
 	// Disable crumbling overlay for these Flywheel block entities
 	private static final Set<ResourceLocation> DISABLED_BLOCKS = Set.of(new ResourceLocation("create", "millstone"),
-			new ResourceLocation("create", "mechanical_piston"), new ResourceLocation("create", "water_wheel"), new ResourceLocation("create", "large_water_wheel"));
+			new ResourceLocation("create", "mechanical_piston"), new ResourceLocation("create", "water_wheel"),
+			new ResourceLocation("create", "large_water_wheel"));
 
 	// Drop the overlay for every Flywheel block entity
 	// It seems block-specific checking is broken, always disable for all Flywheel blocks to be
@@ -34,12 +35,12 @@ public abstract class MixinCrumblingRenderer {
 	// Injection
 
 	@Inject(method = "renderCrumbling", at = @At("HEAD"), cancellable = true)
-	private static void crf$renderCrumbling(Int2ObjectMap<List<BlockEntity>> activeStages, Camera camera, RenderLayerEvent event,
+	private static void cge$renderCrumbling(Int2ObjectMap<List<BlockEntity>> activeStages, Camera camera, RenderLayerEvent event,
 			CallbackInfo callbackInfo) {
 		var shouldRender = false;
 
 		for (var entry : activeStages.int2ObjectEntrySet()) {
-			entry.getValue().removeIf(MixinCrumblingRenderer::crf$shouldSkip);
+			entry.getValue().removeIf(MixinCrumblingRenderer::cge$shouldSkip);
 
 			if (!entry.getValue().isEmpty()) {
 				shouldRender = true;
@@ -51,7 +52,7 @@ public abstract class MixinCrumblingRenderer {
 		}
 	}
 
-	private static boolean crf$shouldSkip(BlockEntity blockEntity) {
+	private static boolean cge$shouldSkip(BlockEntity blockEntity) {
 		if (DISABLE_ALL) {
 			return true;
 		}

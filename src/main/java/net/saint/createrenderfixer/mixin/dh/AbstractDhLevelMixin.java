@@ -27,7 +27,7 @@ public abstract class AbstractDhLevelMixin {
 	protected ConcurrentHashMap<Long, Set<DhChunkPos>> updatedChunkPosSetBySectionPos;
 
 	@Inject(method = "updateChunkAsync", at = @At("HEAD"))
-	private void crf$forceChunkTouched(IChunkWrapper chunkWrapper, int hash, CallbackInfo callbackInfo) {
+	private void cge$forceChunkTouched(IChunkWrapper chunkWrapper, int hash, CallbackInfo callbackInfo) {
 		if (chunkWrapper == null) {
 			return;
 		}

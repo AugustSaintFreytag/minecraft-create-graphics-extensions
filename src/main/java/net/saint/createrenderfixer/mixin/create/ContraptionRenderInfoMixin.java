@@ -27,7 +27,7 @@ public abstract class ContraptionRenderInfoMixin {
 	// Injections
 
 	@Inject(method = "beginFrame", at = @At("TAIL"))
-	private void crf$applyEntityDistanceCulling(BeginFrameEvent event, CallbackInfo callbackInfo) {
+	private void cge$applyEntityDistanceCulling(BeginFrameEvent event, CallbackInfo callbackInfo) {
 		if (!Mod.CONFIG.limitEntityRenderDistance || !visible) {
 			return;
 		}

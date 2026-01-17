@@ -15,7 +15,7 @@ import net.saint.createrenderfixer.utils.MathUtil;
 public abstract class WindmillBearingBlockEntityMixin {
 
 	@Inject(method = "getGeneratedSpeed", at = @At("RETURN"), cancellable = true)
-	private void crf$getGeneratedSpeed(CallbackInfoReturnable<Float> callbackInfo) {
+	private void cge$getGeneratedSpeed(CallbackInfoReturnable<Float> callbackInfo) {
 		var originalSpeed = callbackInfo.getReturnValueF();
 
 		if (originalSpeed == 0.0F) {

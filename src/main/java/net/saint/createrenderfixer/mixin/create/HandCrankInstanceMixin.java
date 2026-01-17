@@ -28,10 +28,10 @@ public abstract class HandCrankInstanceMixin {
 	private Direction facing;
 
 	@Unique
-	private float crf$lastAngle = Float.NaN;
+	private float cge$lastAngle = Float.NaN;
 
 	@Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true, remap = false)
-	private void crf$cacheAndFreeze(CallbackInfo callbackInfo) {
+	private void cge$cacheAndFreeze(CallbackInfo callbackInfo) {
 		if (!Mod.CONFIG.cacheDynamicInstances) {
 			return;
 		}
@@ -44,7 +44,7 @@ public abstract class HandCrankInstanceMixin {
 		var blockEntity = accessor.getBlockEntity();
 		var angle = blockEntity.getIndependentAngle(AnimationTickHolder.getPartialTicks());
 
-		if (!crf$shouldUpdate(angle)) {
+		if (!cge$shouldUpdate(angle)) {
 			callbackInfo.cancel();
 			return;
 		}
@@ -55,12 +55,12 @@ public abstract class HandCrankInstanceMixin {
 		crank.loadIdentity().translate(instancePosition).centre().rotate(Direction.get(Direction.AxisDirection.POSITIVE, axis), angle)
 				.unCentre();
 
-		crf$lastAngle = angle;
+		cge$lastAngle = angle;
 		callbackInfo.cancel();
 	}
 
 	@Unique
-	private boolean crf$shouldUpdate(float angle) {
-		return Float.isNaN(crf$lastAngle) || Math.abs(crf$lastAngle - angle) > 1.0e-5f;
+	private boolean cge$shouldUpdate(float angle) {
+		return Float.isNaN(cge$lastAngle) || Math.abs(cge$lastAngle - angle) > 1.0e-5f;
 	}
 }

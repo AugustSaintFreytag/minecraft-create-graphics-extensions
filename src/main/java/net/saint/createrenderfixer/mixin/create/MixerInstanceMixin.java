@@ -41,14 +41,14 @@ public abstract class MixerInstanceMixin {
 	// State
 
 	@Unique
-	private float crf$lastOffset = Float.NaN;
+	private float cge$lastOffset = Float.NaN;
 	@Unique
-	private float crf$lastHeadSpeed = Float.NaN;
+	private float cge$lastHeadSpeed = Float.NaN;
 
 	// Injections
 
 	@Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true, remap = false)
-	private void crf$cacheAndFreeze(CallbackInfo callbackInfo) {
+	private void cge$cacheAndFreeze(CallbackInfo callbackInfo) {
 		if (!Mod.CONFIG.cacheDynamicInstances) {
 			return;
 		}
@@ -56,8 +56,8 @@ public abstract class MixerInstanceMixin {
 		var offset = getRenderedHeadOffset();
 		var headSpeed = mixer.getRenderedHeadRotationSpeed(AnimationTickHolder.getPartialTicks()) * 2;
 
-		var updateOffset = crf$shouldUpdateOffset(offset);
-		var updateSpeed = crf$shouldUpdateSpeed(headSpeed);
+		var updateOffset = cge$shouldUpdateOffset(offset);
+		var updateSpeed = cge$shouldUpdateSpeed(headSpeed);
 
 		var instance = (MixerInstance) (Object) this;
 		var instancePosition = instance.getInstancePosition();
@@ -72,20 +72,20 @@ public abstract class MixerInstanceMixin {
 
 		if (updateOffset || updateSpeed) {
 			mixerHead.setPosition(instancePosition).nudge(0, -offset, 0).setRotationalSpeed(headSpeed);
-			crf$lastOffset = offset;
-			crf$lastHeadSpeed = headSpeed;
+			cge$lastOffset = offset;
+			cge$lastHeadSpeed = headSpeed;
 		}
 
 		callbackInfo.cancel();
 	}
 
 	@Unique
-	private boolean crf$shouldUpdateOffset(float offset) {
-		return Float.isNaN(crf$lastOffset) || Math.abs(crf$lastOffset - offset) > 1.0e-5f;
+	private boolean cge$shouldUpdateOffset(float offset) {
+		return Float.isNaN(cge$lastOffset) || Math.abs(cge$lastOffset - offset) > 1.0e-5f;
 	}
 
 	@Unique
-	private boolean crf$shouldUpdateSpeed(float headSpeed) {
-		return Float.isNaN(crf$lastHeadSpeed) || Math.abs(crf$lastHeadSpeed - headSpeed) > 1.0e-5f;
+	private boolean cge$shouldUpdateSpeed(float headSpeed) {
+		return Float.isNaN(cge$lastHeadSpeed) || Math.abs(cge$lastHeadSpeed - headSpeed) > 1.0e-5f;
 	}
 }

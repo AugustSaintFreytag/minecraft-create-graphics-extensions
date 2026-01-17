@@ -16,7 +16,7 @@ import net.saint.createrenderfixer.dh.ContraptionBlockRegistry;
 public abstract class AbstractContraptionEntityMixin {
 
 	@Inject(method = "contraptionInitialize", at = @At("TAIL"))
-	private void crf$contraptionInitialize(CallbackInfo callbackInfo) {
+	private void cge$contraptionInitialize(CallbackInfo callbackInfo) {
 		if (!FabricLoader.getInstance().isModLoaded("distanthorizons")) {
 			return;
 		}
@@ -31,7 +31,7 @@ public abstract class AbstractContraptionEntityMixin {
 	}
 
 	@Inject(method = "remove", at = @At("HEAD"))
-	private void crf$onRemove(Entity.RemovalReason reason, CallbackInfo callbackInfo) {
+	private void cge$onRemove(Entity.RemovalReason reason, CallbackInfo callbackInfo) {
 		if (!FabricLoader.getInstance().isModLoaded("distanthorizons")) {
 			return;
 		}
@@ -50,7 +50,7 @@ public abstract class AbstractContraptionEntityMixin {
 	}
 
 	@Inject(method = "disassemble", at = @At("HEAD"))
-	private void crf$onDisassemble(CallbackInfo callbackInfo) {
+	private void cge$onDisassemble(CallbackInfo callbackInfo) {
 		if (!FabricLoader.getInstance().isModLoaded("distanthorizons")) {
 			return;
 		}

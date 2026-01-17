@@ -15,7 +15,7 @@ import net.saint.createrenderfixer.utils.EntityDistanceUtil;
 public abstract class EntityRendererMixin<T extends Entity> {
 
 	@Inject(method = "shouldRender", at = @At("HEAD"), cancellable = true)
-	private void crf$useChunkRenderDistance(T entity, Frustum frustum, double cameraX, double cameraY, double cameraZ,
+	private void cge$useChunkRenderDistance(T entity, Frustum frustum, double cameraX, double cameraY, double cameraZ,
 			CallbackInfoReturnable<Boolean> callbackInfo) {
 		if (!Mod.CONFIG.limitEntityRenderDistance || !Mod.CONFIG.limitEntityRenderDistanceAppliesToAll) {
 			return;

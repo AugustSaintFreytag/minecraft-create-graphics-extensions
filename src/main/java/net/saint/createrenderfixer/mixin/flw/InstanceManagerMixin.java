@@ -47,20 +47,20 @@ public abstract class InstanceManagerMixin {
 	public abstract void queueAdd(Object obj);
 
 	@Unique
-	private final Set<BlockEntity> crf$culledBlockEntities = new HashSet<>();
+	private final Set<BlockEntity> cge$culledBlockEntities = new HashSet<>();
 
 	// Injections
 
 	@Inject(method = "tick", at = @At("HEAD"))
-	private void crf$applyBlockEntityDistanceCulling(TaskEngine taskEngine, double cameraX, double cameraY, double cameraZ,
+	private void cge$applyBlockEntityDistanceCulling(TaskEngine taskEngine, double cameraX, double cameraY, double cameraZ,
 			CallbackInfo callbackInfo) {
-		crf$applyBlockEntityDistanceCulling(cameraX, cameraZ);
+		cge$applyBlockEntityDistanceCulling(cameraX, cameraZ);
 	}
 
 	@Inject(method = "updateInstance", at = @At("HEAD"), cancellable = true)
-	private void crf$updateInstance(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY, int cZ,
+	private void cge$updateInstance(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY, int cZ,
 			CallbackInfo callbackInfo) {
-		if (!crf$shouldAllowUpdateInstance(dynamicInstance, lookX, lookY, lookZ, cX, cY, cZ)) {
+		if (!cge$shouldAllowUpdateInstance(dynamicInstance, lookX, lookY, lookZ, cX, cY, cZ)) {
 			callbackInfo.cancel();
 			return;
 		}
@@ -86,18 +86,18 @@ public abstract class InstanceManagerMixin {
 	// Culling
 
 	@Unique
-	private void crf$applyBlockEntityDistanceCulling(double cameraX, double cameraZ) {
+	private void cge$applyBlockEntityDistanceCulling(double cameraX, double cameraZ) {
 		if (!((Object) this instanceof BlockEntityInstanceManager)) {
 			return;
 		}
 
 		if (!Mod.CONFIG.limitBlockEntityRenderDistance) {
-			crf$restoreCulledBlockEntities();
+			cge$restoreCulledBlockEntities();
 
 			return;
 		}
 
-		var blockEntitiesToCull = crf$getBlockEntitiesToCull(cameraX, cameraZ);
+		var blockEntitiesToCull = cge$getBlockEntitiesToCull(cameraX, cameraZ);
 
 		for (var blockEntity : blockEntitiesToCull) {
 			var instance = instances.get(blockEntity);
@@ -107,24 +107,24 @@ public abstract class InstanceManagerMixin {
 			}
 
 			removeInternal(blockEntity, instance);
-			crf$culledBlockEntities.add(blockEntity);
+			cge$culledBlockEntities.add(blockEntity);
 		}
 
-		crf$updateCulledBlockEntities(cameraX, cameraZ);
+		cge$updateCulledBlockEntities(cameraX, cameraZ);
 	}
 
 	@Unique
-	private void crf$updateCulledBlockEntities(double cameraX, double cameraZ) {
-		if (crf$culledBlockEntities.isEmpty()) {
+	private void cge$updateCulledBlockEntities(double cameraX, double cameraZ) {
+		if (cge$culledBlockEntities.isEmpty()) {
 			return;
 		}
 
-		var iterator = crf$culledBlockEntities.iterator();
+		var iterator = cge$culledBlockEntities.iterator();
 
 		while (iterator.hasNext()) {
 			var blockEntity = iterator.next();
 
-			if (!crf$isBlockEntityReady(blockEntity)) {
+			if (!cge$isBlockEntityReady(blockEntity)) {
 				iterator.remove();
 				continue;
 			}
@@ -145,17 +145,17 @@ public abstract class InstanceManagerMixin {
 	}
 
 	@Unique
-	private void crf$restoreCulledBlockEntities() {
-		if (crf$culledBlockEntities.isEmpty()) {
+	private void cge$restoreCulledBlockEntities() {
+		if (cge$culledBlockEntities.isEmpty()) {
 			return;
 		}
 
-		var iterator = crf$culledBlockEntities.iterator();
+		var iterator = cge$culledBlockEntities.iterator();
 
 		while (iterator.hasNext()) {
 			var blockEntity = iterator.next();
 
-			if (!crf$isBlockEntityReady(blockEntity)) {
+			if (!cge$isBlockEntityReady(blockEntity)) {
 				iterator.remove();
 				continue;
 			}
@@ -170,7 +170,7 @@ public abstract class InstanceManagerMixin {
 	}
 
 	@Unique
-	private ArrayList<BlockEntity> crf$getBlockEntitiesToCull(double cameraX, double cameraZ) {
+	private ArrayList<BlockEntity> cge$getBlockEntitiesToCull(double cameraX, double cameraZ) {
 		var blockEntitiesToCull = new ArrayList<BlockEntity>();
 
 		for (var entry : instances.entrySet()) {
@@ -178,7 +178,7 @@ public abstract class InstanceManagerMixin {
 				continue;
 			}
 
-			if (!crf$isBlockEntityReady(blockEntity)) {
+			if (!cge$isBlockEntityReady(blockEntity)) {
 				continue;
 			}
 
@@ -196,7 +196,7 @@ public abstract class InstanceManagerMixin {
 
 	// Utility
 
-	private boolean crf$shouldAllowUpdateInstance(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY,
+	private boolean cge$shouldAllowUpdateInstance(DynamicInstance dynamicInstance, float lookX, float lookY, float lookZ, int cX, int cY,
 			int cZ) {
 		if (Mod.isInstanceBlacklisted(dynamicInstance)) {
 			return true;
@@ -212,7 +212,7 @@ public abstract class InstanceManagerMixin {
 	}
 
 	@Unique
-	private boolean crf$isBlockEntityReady(BlockEntity blockEntity) {
+	private boolean cge$isBlockEntityReady(BlockEntity blockEntity) {
 		if (blockEntity == null) {
 			return false;
 		}

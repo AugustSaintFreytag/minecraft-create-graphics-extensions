@@ -30,7 +30,7 @@ public abstract class DhLodDataBuilderMixin {
 	// Injections
 
 	@Redirect(method = "createFromChunk", at = @At(value = "INVOKE", target = "Lcom/seibel/distanthorizons/core/wrapperInterfaces/chunk/IChunkWrapper;getLightBlockingHeightMapValue(II)I"))
-	private static int crf$boostLightBlockingHeightMap(IChunkWrapper chunkWrapper, int relativeX, int relativeZ, ILevelWrapper levelWrapper,
+	private static int cge$boostLightBlockingHeightMap(IChunkWrapper chunkWrapper, int relativeX, int relativeZ, ILevelWrapper levelWrapper,
 			IChunkWrapper originalChunkWrapper) {
 		if (!Mod.CONFIG.injectContraptionLODs) {
 			return chunkWrapper.getLightBlockingHeightMapValue(relativeX, relativeZ);
@@ -46,7 +46,7 @@ public abstract class DhLodDataBuilderMixin {
 	}
 
 	@Redirect(method = "createFromChunk", at = @At(value = "INVOKE", target = "Lcom/seibel/distanthorizons/core/wrapperInterfaces/chunk/IChunkWrapper;getSolidHeightMapValue(II)I"))
-	private static int crf$boostSolidHeightMap(IChunkWrapper chunkWrapper, int relativeX, int relativeZ, ILevelWrapper levelWrapper,
+	private static int cge$boostSolidHeightMap(IChunkWrapper chunkWrapper, int relativeX, int relativeZ, ILevelWrapper levelWrapper,
 			IChunkWrapper originalChunkWrapper) {
 		if (!Mod.CONFIG.injectContraptionLODs) {
 			return chunkWrapper.getSolidHeightMapValue(relativeX, relativeZ);
@@ -62,7 +62,7 @@ public abstract class DhLodDataBuilderMixin {
 	}
 
 	@Redirect(method = "createFromChunk", at = @At(value = "INVOKE", target = "Lcom/seibel/distanthorizons/core/wrapperInterfaces/chunk/IChunkWrapper;getBlockState(IIILcom/seibel/distanthorizons/core/wrapperInterfaces/misc/IMutableBlockPosWrapper;Lcom/seibel/distanthorizons/core/wrapperInterfaces/block/IBlockStateWrapper;)Lcom/seibel/distanthorizons/core/wrapperInterfaces/block/IBlockStateWrapper;"))
-	private static IBlockStateWrapper crf$injectContraptionBlocks(IChunkWrapper chunkWrapper, int relX, int relY, int relZ,
+	private static IBlockStateWrapper cge$injectContraptionBlocks(IChunkWrapper chunkWrapper, int relX, int relY, int relZ,
 			IMutableBlockPosWrapper mutablePos, IBlockStateWrapper cachedState, ILevelWrapper levelWrapper,
 			IChunkWrapper originalChunkWrapper) {
 		if (!Mod.CONFIG.injectContraptionLODs) {

@@ -28,12 +28,12 @@ public abstract class PressInstanceMixin {
 	protected abstract float getRenderedHeadOffset(MechanicalPressBlockEntity press);
 
 	@Unique
-	private float crf$lastHeadOffset = Float.NaN;
+	private float cge$lastHeadOffset = Float.NaN;
 
 	// Injections
 
 	@Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true, remap = false)
-	private void crf$cacheAndFreeze(CallbackInfo callbackInfo) {
+	private void cge$cacheAndFreeze(CallbackInfo callbackInfo) {
 		if (!Mod.CONFIG.cacheDynamicInstances) {
 			return;
 		}
@@ -43,7 +43,7 @@ public abstract class PressInstanceMixin {
 		var blockEntity = blockEntityAccessor.getBlockEntity();
 		var offset = getRenderedHeadOffset(blockEntity);
 
-		if (crf$shouldUpdate(offset)) {
+		if (cge$shouldUpdate(offset)) {
 			var instancePosition = instance.getInstancePosition();
 
 			if (instancePosition == null) {
@@ -51,14 +51,14 @@ public abstract class PressInstanceMixin {
 			}
 
 			pressHead.setPosition(instancePosition).nudge(0, -offset, 0);
-			crf$lastHeadOffset = offset;
+			cge$lastHeadOffset = offset;
 		}
 
 		callbackInfo.cancel();
 	}
 
 	@Unique
-	private boolean crf$shouldUpdate(float offset) {
-		return Float.isNaN(crf$lastHeadOffset) || Math.abs(crf$lastHeadOffset - offset) > 1.0e-5f;
+	private boolean cge$shouldUpdate(float offset) {
+		return Float.isNaN(cge$lastHeadOffset) || Math.abs(cge$lastHeadOffset - offset) > 1.0e-5f;
 	}
 }
