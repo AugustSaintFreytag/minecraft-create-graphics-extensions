@@ -22,11 +22,10 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.saint.createrenderfixer.Mod;
+import net.saint.createrenderfixer.ModClient;
 import net.saint.createrenderfixer.dh.DhBridge;
 import net.saint.createrenderfixer.dh.WindmillLODBoxUtil;
 import net.saint.createrenderfixer.dh.WindmillLODEntry;
-import net.saint.createrenderfixer.dh.WindmillLODManager;
-import net.saint.createrenderfixer.dh.WindmillLODMaterialManager;
 
 public final class WindmillLODRenderManager {
 
@@ -65,7 +64,7 @@ public final class WindmillLODRenderManager {
 
 		var activeIdentifiers = new HashSet<UUID>();
 
-		for (var entry : WindmillLODManager.entries()) {
+		for (var entry : ModClient.WINDMILL_LOD_MANAGER.entries()) {
 			if (!dimensionId.equals(entry.dimensionId)) {
 				continue;
 			}
@@ -74,8 +73,9 @@ public final class WindmillLODRenderManager {
 				continue;
 			}
 
-			var renderAngle = getRenderAngleForEntry(level, entry, partialTicks);
 			activeIdentifiers.add(entry.contraptionId);
+
+			var renderAngle = updateRenderAngleForEntry(level, entry, partialTicks);
 			var renderGroup = getOrCreateRenderGroup(renderFactory, renderRegister, entry);
 
 			if (renderGroup == null) {
@@ -174,11 +174,11 @@ public final class WindmillLODRenderManager {
 	}
 
 	private static Color getBladeColor() {
-		return WindmillLODMaterialManager.getBladeColor();
+		return ModClient.WINDMILL_LOD_MATERIAL_MANAGER.getBladeColor();
 	}
 
 	private static EDhApiBlockMaterial getBladeMaterial() {
-		return WindmillLODMaterialManager.getBladeMaterial();
+		return ModClient.WINDMILL_LOD_MATERIAL_MANAGER.getBladeMaterial();
 	}
 
 	private static void updateRenderGroupBoxes(IDhApiRenderableBoxGroup renderGroup, WindmillLODEntry entry, float renderAngle) {
@@ -327,6 +327,7 @@ public final class WindmillLODRenderManager {
 		var originX = originPosition.getX() + 0.5;
 		var originY = originPosition.getY() + 0.5;
 		var originZ = originPosition.getZ() + 0.5;
+
 		var deltaX = originX - cameraPosition.x;
 		var deltaY = originY - cameraPosition.y;
 		var deltaZ = originZ - cameraPosition.z;
@@ -334,7 +335,7 @@ public final class WindmillLODRenderManager {
 		return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
 	}
 
-	private static float getRenderAngleForEntry(ClientLevel level, WindmillLODEntry entry, float partialTicks) {
+	private static float updateRenderAngleForEntry(ClientLevel level, WindmillLODEntry entry, float partialTicks) {
 		var currentTick = level.getGameTime();
 		var lastSynchronizationTick = entry.lastSynchronizationTick;
 		var tickDelta = currentTick - lastSynchronizationTick;
@@ -347,6 +348,8 @@ public final class WindmillLODRenderManager {
 		}
 
 		var renderAngle = entry.rotationAngle + rotationSpeed * partialTicks;
+		renderAngle += Mod.CONFIG.windmillBladeRotationAngleOffset;
+
 		return wrapDegrees(renderAngle);
 	}
 

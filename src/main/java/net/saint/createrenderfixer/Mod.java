@@ -16,7 +16,7 @@ import net.saint.createrenderfixer.dh.ContraptionPersistencyUtil;
 import net.saint.createrenderfixer.dh.ContraptionRegistrationUtil;
 import net.saint.createrenderfixer.dh.DhBridge;
 import net.saint.createrenderfixer.dh.DhChunkProcessingHandler;
-import net.saint.createrenderfixer.dh.WindmillLODMaterialManager;
+import net.saint.createrenderfixer.dh.WindmillLODManager;
 import net.saint.createrenderfixer.dh.WindmillLODServerTracker;
 import net.saint.createrenderfixer.network.WindmillLODSyncUtil;
 import net.saint.createrenderfixer.utils.BlockTickingUtil;
@@ -32,9 +32,13 @@ public class Mod implements ModInitializer {
 
 	// References
 
+	public static final Logger LOGGER = Logger.create(MOD_NAME);
+
 	public static ModConfig CONFIG;
 
-	public static final Logger LOGGER = Logger.create(MOD_NAME);
+	// State
+
+	public static WindmillLODManager WINDMILL_LOD_MANAGER;
 
 	// Init
 
@@ -47,7 +51,6 @@ public class Mod implements ModInitializer {
 
 		AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((config, data) -> {
 			EntityBlacklistManager.reloadFromConfig();
-			WindmillLODMaterialManager.reloadFromConfig();
 
 			return null;
 		});
@@ -59,16 +62,17 @@ public class Mod implements ModInitializer {
 		// Distant Horizons
 
 		if (FabricLoader.getInstance().isModLoaded("distanthorizons")) {
-			initDistantHorizonsInterop();
+			initializeDistantHorizonsInterop();
 		}
 
 		// Load
 
 		EntityBlacklistManager.reloadFromConfig();
-		WindmillLODMaterialManager.reloadFromConfig();
 	}
 
-	private void initDistantHorizonsInterop() {
+	private void initializeDistantHorizonsInterop() {
+		WINDMILL_LOD_MANAGER = new WindmillLODManager();
+
 		DhBridge.init();
 		DhChunkProcessingHandler.init();
 		WindmillLODSyncUtil.initServer();
@@ -79,7 +83,7 @@ public class Mod implements ModInitializer {
 
 		ServerWorldEvents.UNLOAD.register((server, world) -> {
 			ContraptionBlockRegistry.clearForWorld(world.dimension().location().toString());
-			WindmillLODSyncUtil.broadcastLoadAllPacket(server);
+			WindmillLODSyncUtil.sendLoadPacketToAllPlayers(server);
 		});
 
 		ServerWorldEvents.LOAD.register((server, world) -> {

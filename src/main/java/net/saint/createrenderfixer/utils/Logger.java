@@ -1,5 +1,8 @@
 package net.saint.createrenderfixer.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 
 import net.saint.createrenderfixer.Mod;
@@ -9,13 +12,11 @@ public final class Logger {
 	// Properties
 
 	private final org.apache.logging.log4j.Logger delegate;
-	private final String prefix;
 
 	// Init
 
 	private Logger(String name) {
 		this.delegate = LogManager.getLogger(name);
-		this.prefix = "[" + Mod.MOD_NAME + "] ";
 	}
 
 	public static Logger create(String name) {
@@ -29,28 +30,57 @@ public final class Logger {
 	// Logging
 
 	public void trace(String message, Object... params) {
-		withEnabledLogging(() -> delegate.trace(prefix + message, params));
-
+		withEnabledLogging(() -> delegate.trace(getPrefix() + message, params));
 	}
 
 	public void debug(String message, Object... params) {
-		withEnabledLogging(() -> delegate.debug(prefix + message, params));
+		withEnabledLogging(() -> delegate.debug(getPrefix() + message, params));
 	}
 
 	public void info(String message, Object... params) {
-		withEnabledLogging(() -> delegate.info(prefix + message, params));
+		withEnabledLogging(() -> delegate.info(getPrefix() + message, params));
 	}
 
 	public void warn(String message, Object... params) {
-		withEnabledLogging(() -> delegate.warn(prefix + message, params));
+		withEnabledLogging(() -> delegate.warn(getPrefix() + message, params));
 	}
 
 	public void error(String message, Object... params) {
-		withEnabledLogging(() -> delegate.error(prefix + message, params));
+		withEnabledLogging(() -> delegate.error(getPrefix() + message, params));
 	}
 
 	public void error(String message, Throwable throwable) {
-		withEnabledLogging(() -> delegate.error(prefix + message, throwable));
+		withEnabledLogging(() -> delegate.error(getPrefix() + message, throwable));
+	}
+
+	// Content
+
+	private String getPrefix() {
+		return getModPrefix() + " " + getEnvironmentPrefix() + " ";
+	}
+
+	private String getEnvironmentPrefix() {
+		return "[" + getCurrentEnvironmentLabel() + "]";
+	}
+
+	private String getModPrefix() {
+		return "[" + Mod.MOD_NAME + "]";
+	}
+
+	private static final Map<String, String> THREAD_NAME_MAP = new HashMap<>() {
+		{
+			this.put("Render thread", "Client");
+			this.put("Netty Local Client IO", "Client/Network");
+			this.put("Server thread", "Server");
+			this.put("Netty Server IO", "Server (Network)");
+		}
+	};
+
+	private static String getCurrentEnvironmentLabel() {
+		var threadName = Thread.currentThread().getName();
+		var remappedName = THREAD_NAME_MAP.computeIfAbsent(threadName, (key) -> ellipsizedLabel(key));
+
+		return remappedName;
 	}
 
 	// Check
@@ -66,4 +96,22 @@ public final class Logger {
 
 		action.run();
 	}
+
+	// Utility
+
+	private static String ellipsizedLabel(String label) {
+		return ellipsizedLabel(label, 20);
+	}
+
+	private static String ellipsizedLabel(String label, int maxLength) {
+		if (label.length() <= maxLength) {
+			return label;
+		}
+
+		int leftLength = maxLength / 2 - 1;
+		int rightLength = maxLength - leftLength - 1;
+
+		return label.substring(0, leftLength) + "…" + label.substring(label.length() - rightLength);
+	}
+
 }

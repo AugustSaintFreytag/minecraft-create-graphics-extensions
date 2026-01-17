@@ -42,7 +42,7 @@ public final class DhBridge {
 				}
 			});
 		} catch (Throwable throwable) {
-			Mod.LOGGER.debug("Failed to bind Distant Horizons init event; DH likely absent.", throwable);
+			Mod.LOGGER.info("Failed to bind Distant Horizons init event; DH likely absent.", throwable);
 			isInitialized = false;
 		}
 	}

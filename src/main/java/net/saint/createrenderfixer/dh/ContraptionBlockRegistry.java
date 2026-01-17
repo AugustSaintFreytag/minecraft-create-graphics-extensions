@@ -111,7 +111,7 @@ public final class ContraptionBlockRegistry {
 		var windmillData = resolveWindmillRegistrationData(entity, serverLevel);
 
 		if (windmillData != null) {
-			registerWindmillEntry(serverLevel, dimensionId, contraptionId, contraption, windmillData);
+			registerWindmillEntry(serverLevel, dimensionId, contraptionId, contraption, windmillData, false);
 			removeStoredBlocksForWindmill(dimensionId, anchorPosition, windmillData.bounds());
 
 			return;
@@ -148,7 +148,7 @@ public final class ContraptionBlockRegistry {
 		var windmillRemoved = unregisterInternal(contraptionIdentifier);
 
 		if (windmillRemoved) {
-			WindmillLODSyncUtil.broadcastRemovalPacket(serverLevel.getServer(), contraptionIdentifier);
+			WindmillLODSyncUtil.sendRemovalPacketToAllPlayers(serverLevel.getServer(), contraptionIdentifier);
 			Mod.LOGGER.info("Unregistered windmill LOD entry for contraption '{}'.", contraptionIdentifier);
 		}
 	}
@@ -160,7 +160,50 @@ public final class ContraptionBlockRegistry {
 	public static void clearForWorld(String dimensionId) {
 		BY_DIMENSION.remove(dimensionId);
 		CONTRAPTIONS.entrySet().removeIf(e -> e.getValue().dimensionId.equals(dimensionId));
-		WindmillLODManager.clearForWorld(dimensionId);
+
+		Mod.WINDMILL_LOD_MANAGER.clearForWorld(dimensionId);
+	}
+
+	// Debug
+
+	public static int reregisterLoadedWindmillEntities(ServerLevel level) {
+		if (level == null) {
+			return 0;
+		}
+
+		var updatedCount = 0;
+
+		for (var entity : level.getAllEntities()) {
+			if (!(entity instanceof AbstractContraptionEntity contraptionEntity)) {
+				continue;
+			}
+
+			var windmillData = resolveWindmillRegistrationData(contraptionEntity, level);
+
+			if (windmillData == null) {
+				continue;
+			}
+
+			var contraption = contraptionEntity.getContraption();
+
+			if (contraption == null || contraption.getBlocks().isEmpty()) {
+				continue;
+			}
+
+			var dimensionId = level.dimension().location().toString();
+			var contraptionId = contraptionEntity.getUUID();
+			var anchorPosition = contraption.anchor;
+
+			registerWindmillEntry(level, dimensionId, contraptionId, contraption, windmillData, true);
+
+			if (anchorPosition != null) {
+				removeStoredBlocksForWindmill(dimensionId, anchorPosition, windmillData.bounds());
+			}
+
+			updatedCount++;
+		}
+
+		return updatedCount;
 	}
 
 	@Nullable
@@ -285,13 +328,18 @@ public final class ContraptionBlockRegistry {
 
 	// Utility
 
-	private static void registerWindmillEntry(ServerLevel serverLevel, String dimensionIdentifier, UUID id, Contraption contraption,
-			WindmillRegistrationData windmillData) {
-		var existingEntry = WindmillLODManager.find(id);
+	private static boolean registerWindmillEntry(ServerLevel serverLevel, String dimensionIdentifier, UUID id, Contraption contraption,
+			WindmillRegistrationData windmillData, boolean force) {
+		var existingEntry = Mod.WINDMILL_LOD_MANAGER.find(id);
+
+		if (existingEntry != null && !force) {
+			Mod.LOGGER.info("Windmill contraption '{}' with registered LOD entry loading back in.", id);
+
+			return false;
+		}
 
 		if (existingEntry != null) {
-			Mod.LOGGER.info("Windmill contraption '{}' with registered LOD entry loading back in.", id);
-			return;
+			Mod.WINDMILL_LOD_MANAGER.unregister(id);
 		}
 
 		var windmillBearing = windmillData.windmillBearing();
@@ -309,17 +357,20 @@ public final class ContraptionBlockRegistry {
 		var entry = new WindmillLODEntry(id, dimensionIdentifier, windmillData.controllerPosition(), windmillData.rotationAxis(),
 				bearingDirection, planeSize, bladeGeometry, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
 
-		WindmillLODManager.register(entry);
-		WindmillLODSyncUtil.broadcastUpdatePacket(serverLevel.getServer(), entry);
+		Mod.WINDMILL_LOD_MANAGER.register(entry);
 
-		Mod.LOGGER.info("Registered windmill LOD entry for contraption '{}' in '{}' (blade size l:{}, w:{}, d:{}, s:{}).", id,
+		WindmillLODSyncUtil.sendUpdatePacketToAllPlayers(serverLevel.getServer(), entry);
+
+		Mod.LOGGER.info("Registered {} windmill LOD entry for contraption '{}' in '{}' (blade size l:'{}', w:'{}', d:'{}', s:'{}').", id,
 				dimensionIdentifier, bladeGeometry.length(), bladeGeometry.width(), bladeGeometry.depth(),
 				bladeGeometry.numberOfSegments());
+
+		return true;
 	}
 
 	private static boolean unregisterInternal(UUID contraptionId) {
 		var removed = CONTRAPTIONS.remove(contraptionId);
-		var windmillRemoved = WindmillLODManager.unregister(contraptionId);
+		var windmillRemoved = Mod.WINDMILL_LOD_MANAGER.unregister(contraptionId);
 
 		if (removed == null) {
 			return windmillRemoved;
@@ -424,7 +475,13 @@ public final class ContraptionBlockRegistry {
 			return null;
 		}
 
-		var bounds = entity.getContraption().bounds;
+		var contraption = entity.getContraption();
+
+		if (contraption == null) {
+			return null;
+		}
+
+		var bounds = contraption.bounds;
 
 		if (bounds == null) {
 			return null;

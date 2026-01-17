@@ -18,8 +18,9 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.saint.createrenderfixer.Mod;
 
-public final class CreateLodPersistentData extends SavedData {
+public final class ContraptionLODPersistentData extends SavedData {
 
 	// Configuration
 
@@ -27,15 +28,16 @@ public final class CreateLodPersistentData extends SavedData {
 
 	// State
 
-	private Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> chunkData;
+	private Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> chunkData = new HashMap<>();
 
-	private List<WindmillLODEntry> windmills;
+	private List<WindmillLODEntry> windmills = new ArrayList<>();
 
-	public CreateLodPersistentData() {
-		this(new HashMap<>(), new ArrayList<>());
+	// Init
+
+	public ContraptionLODPersistentData() {
 	}
 
-	private CreateLodPersistentData(Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> chunkData,
+	private ContraptionLODPersistentData(Map<String, Map<Long, List<ContraptionBlockRegistry.StoredBlock>>> chunkData,
 			List<WindmillLODEntry> windmills) {
 		this.chunkData = chunkData;
 		this.windmills = windmills;
@@ -43,18 +45,18 @@ public final class CreateLodPersistentData extends SavedData {
 
 	// Load
 
-	public static CreateLodPersistentData loadFromServer(MinecraftServer server) {
+	public static ContraptionLODPersistentData loadFromServer(MinecraftServer server) {
 		var dataStorage = server.overworld().getDataStorage();
-		var state = dataStorage.computeIfAbsent(CreateLodPersistentData::fromNbt, CreateLodPersistentData::new, NAME);
+		var state = dataStorage.computeIfAbsent(ContraptionLODPersistentData::fromNbt, ContraptionLODPersistentData::new, NAME);
 
 		return state;
 	}
 
-	public static CreateLodPersistentData fromNbt(CompoundTag root) {
+	public static ContraptionLODPersistentData fromNbt(CompoundTag root) {
 		var blocks = BuiltInRegistries.BLOCK.asLookup();
 		var data = decode(blocks, root);
 
-		return new CreateLodPersistentData(data.chunkData(), data.windmills());
+		return new ContraptionLODPersistentData(data.chunkData(), data.windmills());
 	}
 
 	// Persistence
@@ -67,12 +69,12 @@ public final class CreateLodPersistentData extends SavedData {
 
 	public void applyToRegistries() {
 		ContraptionBlockRegistry.loadPersistent(chunkData);
-		WindmillLODManager.loadPersistent(windmills);
+		Mod.WINDMILL_LOD_MANAGER.loadPersistent(windmills);
 	}
 
 	public void captureFromRegistries() {
 		chunkData = ContraptionBlockRegistry.snapshot();
-		windmills = WindmillLODManager.snapshotPersistent();
+		windmills = Mod.WINDMILL_LOD_MANAGER.snapshotPersistent();
 		setDirty();
 	}
 
@@ -88,7 +90,7 @@ public final class CreateLodPersistentData extends SavedData {
 		return false;
 	}
 
-	public void replaceWith(CreateLodPersistentData other) {
+	public void replaceWith(ContraptionLODPersistentData other) {
 		if (other == null) {
 			return;
 		}

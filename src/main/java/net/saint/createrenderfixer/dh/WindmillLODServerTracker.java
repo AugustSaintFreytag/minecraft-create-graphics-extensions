@@ -27,13 +27,13 @@ public final class WindmillLODServerTracker {
 	private static void tickLevel(MinecraftServer server, ServerLevel level) {
 		var currentTick = level.getGameTime();
 
-		if (currentTick % Mod.CONFIG.windmillSyncTickInterval != 0) {
+		if (currentTick % Mod.CONFIG.windmillTickInterval != 0) {
 			return;
 		}
 
 		var dimensionId = level.dimension().location().toString();
 
-		for (var entry : WindmillLODManager.entries()) {
+		for (var entry : Mod.WINDMILL_LOD_MANAGER.entries()) {
 			if (!dimensionId.equals(entry.dimensionId)) {
 				continue;
 			}
@@ -95,7 +95,7 @@ public final class WindmillLODServerTracker {
 
 			if (assertedAngle != 0f && assertedAngle != currentAngle) {
 				// If this ever logs, the bearing does not return a value it was just set to.
-				Mod.LOGGER.error("Asserted angle mismatch!");
+				Mod.LOGGER.error("Asserted angle mismatch. Set to {} but returned {}.", predictedAngle, currentAngle);
 			}
 
 			entry.isStale = false;
@@ -120,13 +120,13 @@ public final class WindmillLODServerTracker {
 			return;
 		}
 
-		var removed = WindmillLODManager.unregister(entry.contraptionId);
+		var removed = Mod.WINDMILL_LOD_MANAGER.unregister(entry.contraptionId);
 
 		if (!removed) {
 			return;
 		}
 
-		WindmillLODSyncUtil.broadcastRemovalPacket(server, entry.contraptionId);
+		WindmillLODSyncUtil.sendRemovalPacketToAllPlayers(server, entry.contraptionId);
 		Mod.LOGGER.info("Removed stale windmill LOD entry for contraption '{}' due to '{}'.", entry.contraptionId, reason);
 	}
 
@@ -138,8 +138,9 @@ public final class WindmillLODServerTracker {
 		entry.rotationAngle = rotationAngle;
 		entry.lastSynchronizationTick = currentTick;
 
-		Mod.LOGGER.info("Updating entry for contraption '{}' due to '{}' and broadcasting to all clients.", entry.contraptionId, reason);
-		WindmillLODSyncUtil.broadcastUpdatePacket(server, entry);
+		Mod.LOGGER.info("Updated entry for contraption '{}' (speed {}, angle {}, last tick {}) due to '{}'.", entry.contraptionId,
+				rotationSpeed, rotationAngle, currentTick, reason);
+		WindmillLODSyncUtil.sendUpdatePacketToAllPlayers(server, entry);
 	}
 
 	/**
@@ -201,7 +202,7 @@ public final class WindmillLODServerTracker {
 			}
 		}
 
-		if (currentTick - entry.lastSynchronizationTick > Mod.CONFIG.windmillSyncTickInterval * 8) {
+		if (currentTick > entry.lastSynchronizationTick + Mod.CONFIG.windmillTickInterval) {
 			return true;
 		}
 
@@ -224,7 +225,7 @@ public final class WindmillLODServerTracker {
 		var currentTick = level.getGameTime();
 		var server = level.getServer();
 
-		for (var entry : WindmillLODManager.entries()) {
+		for (var entry : Mod.WINDMILL_LOD_MANAGER.entries()) {
 			if (!dimensionId.equals(entry.dimensionId)) {
 				continue;
 			}

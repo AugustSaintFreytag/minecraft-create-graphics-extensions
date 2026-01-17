@@ -97,7 +97,7 @@ public abstract class DhLodDataBuilderMixin {
 
 					return (IBlockStateWrapper) stateWrapper;
 				} catch (Exception exception) {
-					Mod.LOGGER.debug("Could not inject DH contraption at {}/{}/{} in {}", worldX, relY, worldZ, dimensionId, exception);
+					Mod.LOGGER.info("Could not inject DH contraption at {}/{}/{} in {}", worldX, relY, worldZ, dimensionId, exception);
 				}
 			}
 		}
