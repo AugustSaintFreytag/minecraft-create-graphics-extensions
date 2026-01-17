@@ -63,7 +63,7 @@ public final class WindmillLODSyncUtil {
 
 			client.execute(() -> {
 				ModClient.WINDMILL_LOD_MANAGER.register(entry);
-				Mod.LOGGER.debug("Received and updated registration for windmill LOD for contraption '{}' client-side (tick {}).",
+				Mod.LOGGER.info("Received and updated registration for windmill LOD for contraption '{}' client-side (tick {}).",
 						entry.contraptionId, entry.lastSynchronizationTick);
 			});
 		});
@@ -73,7 +73,7 @@ public final class WindmillLODSyncUtil {
 
 			client.execute(() -> {
 				ModClient.WINDMILL_LOD_MANAGER.unregister(contraptionIdentifier);
-				Mod.LOGGER.debug("Deregistered windmill LOD for contraption '{}' client-side.", contraptionIdentifier);
+				Mod.LOGGER.info("Deregistered windmill LOD for contraption '{}' client-side.", contraptionIdentifier);
 			});
 		});
 	}
