@@ -39,12 +39,34 @@ public final class WindmillLODRenderManager {
 
 	// State
 
-	private static final Map<UUID, IDhApiRenderableBoxGroup> RENDER_GROUPS = new ConcurrentHashMap<>();
-	private static final Map<UUID, Float> LAST_RENDER_ANGLES = new ConcurrentHashMap<>();
+	private final Map<UUID, IDhApiRenderableBoxGroup> renderGroups = new ConcurrentHashMap<>();
+	private final Map<UUID, Float> lastRenderAngles = new ConcurrentHashMap<>();
+
+	// Lifecycle
+
+	public void clear() {
+		var renderRegister = resolveRenderRegister();
+
+		for (var entry : renderGroups.entrySet()) {
+			var renderGroup = entry.getValue();
+			renderGroup.setActive(false);
+
+			if (renderRegister != null) {
+				try {
+					renderRegister.remove(renderGroup.getId());
+				} catch (Exception exception) {
+					// DH may reject removal while it is still initializing, can be ignored.
+				}
+			}
+		}
+
+		renderGroups.clear();
+		lastRenderAngles.clear();
+	}
 
 	// Ticking
 
-	public static void tick(ClientLevel level, float partialTicks) {
+	public void tick(ClientLevel level, float partialTicks) {
 		if (!DhBridge.isReady()) {
 			return;
 		}
@@ -91,9 +113,9 @@ public final class WindmillLODRenderManager {
 	// Rendering
 
 	@Nullable
-	private static IDhApiRenderableBoxGroup getOrCreateRenderGroup(IDhApiCustomRenderObjectFactory renderFactory,
+	private IDhApiRenderableBoxGroup getOrCreateRenderGroup(IDhApiCustomRenderObjectFactory renderFactory,
 			IDhApiCustomRenderRegister renderRegister, WindmillLODEntry entry) {
-		var renderGroup = RENDER_GROUPS.get(entry.contraptionId);
+		var renderGroup = renderGroups.get(entry.contraptionId);
 
 		if (renderGroup != null) {
 			return renderGroup;
@@ -108,7 +130,7 @@ public final class WindmillLODRenderManager {
 			renderGroup.setOriginBlockPos(originPosition);
 
 			renderRegister.add(renderGroup);
-			RENDER_GROUPS.put(entry.contraptionId, renderGroup);
+			renderGroups.put(entry.contraptionId, renderGroup);
 		} catch (IllegalArgumentException exception) {
 			Mod.LOGGER.warn("Failed to register windmill render group '{}'.", resourceLocation, exception);
 
@@ -118,11 +140,11 @@ public final class WindmillLODRenderManager {
 		return renderGroup;
 	}
 
-	private static void updateRenderGroup(IDhApiRenderableBoxGroup renderGroup, WindmillLODEntry entry, float renderAngle) {
+	private void updateRenderGroup(IDhApiRenderableBoxGroup renderGroup, WindmillLODEntry entry, float renderAngle) {
 		var originPosition = toOrigin(getRenderAnchorPositionForEntry(entry));
 		renderGroup.setOriginBlockPos(originPosition);
 
-		var lastAngle = LAST_RENDER_ANGLES.get(entry.contraptionId);
+		var lastAngle = lastRenderAngles.get(entry.contraptionId);
 
 		if (lastAngle != null) {
 			var rotationDelta = getRotationDeltaForAngles(lastAngle, renderAngle);
@@ -134,11 +156,11 @@ public final class WindmillLODRenderManager {
 		}
 
 		updateRenderGroupBoxes(renderGroup, entry, renderAngle);
-		LAST_RENDER_ANGLES.put(entry.contraptionId, renderAngle);
+		lastRenderAngles.put(entry.contraptionId, renderAngle);
 	}
 
-	private static void removeStaleRenderGroups(HashSet<UUID> activeIdentifiers, IDhApiCustomRenderRegister renderRegister) {
-		var iterator = RENDER_GROUPS.entrySet().iterator();
+	private void removeStaleRenderGroups(HashSet<UUID> activeIdentifiers, IDhApiCustomRenderRegister renderRegister) {
+		var iterator = renderGroups.entrySet().iterator();
 
 		while (iterator.hasNext()) {
 			var entry = iterator.next();
@@ -158,28 +180,28 @@ public final class WindmillLODRenderManager {
 			}
 
 			iterator.remove();
-			LAST_RENDER_ANGLES.remove(contraptionId);
+			lastRenderAngles.remove(contraptionId);
 		}
 	}
 
 	// Geometry
 
-	private static List<DhApiRenderableBox> getWindmillCrossBoxesForEntry(WindmillLODEntry entry, float rotationAngle) {
+	private List<DhApiRenderableBox> getWindmillCrossBoxesForEntry(WindmillLODEntry entry, float rotationAngle) {
 		var bladeColor = getBladeColor();
 		var bladeMaterial = getBladeMaterial();
 
 		return WindmillLODBoxUtil.makeWindmillBladeBoxes(entry, bladeColor, bladeMaterial, rotationAngle);
 	}
 
-	private static Color getBladeColor() {
+	private Color getBladeColor() {
 		return ModClient.WINDMILL_LOD_MATERIAL_MANAGER.getBladeColor();
 	}
 
-	private static EDhApiBlockMaterial getBladeMaterial() {
+	private EDhApiBlockMaterial getBladeMaterial() {
 		return ModClient.WINDMILL_LOD_MATERIAL_MANAGER.getBladeMaterial();
 	}
 
-	private static void updateRenderGroupBoxes(IDhApiRenderableBoxGroup renderGroup, WindmillLODEntry entry, float renderAngle) {
+	private void updateRenderGroupBoxes(IDhApiRenderableBoxGroup renderGroup, WindmillLODEntry entry, float renderAngle) {
 		var updatedBoxes = getWindmillCrossBoxesForEntry(entry, renderAngle);
 
 		if (renderGroup.size() != updatedBoxes.size()) {
@@ -205,11 +227,11 @@ public final class WindmillLODRenderManager {
 
 	// Utility
 
-	private static DhApiVec3d toOrigin(BlockPos anchorPosition) {
+	private DhApiVec3d toOrigin(BlockPos anchorPosition) {
 		return new DhApiVec3d(anchorPosition.getX() + 0.5, anchorPosition.getY() + 0.5, anchorPosition.getZ() + 0.5);
 	}
 
-	private static BlockPos getRenderAnchorPositionForEntry(WindmillLODEntry entry) {
+	private BlockPos getRenderAnchorPositionForEntry(WindmillLODEntry entry) {
 		var bearingDirection = entry.bearingDirection;
 
 		if (bearingDirection == null) {
@@ -219,11 +241,11 @@ public final class WindmillLODRenderManager {
 		return entry.anchorPosition.relative(bearingDirection);
 	}
 
-	private static String getDimensionIdForLevel(ClientLevel level) {
+	private String getDimensionIdForLevel(ClientLevel level) {
 		return level.dimension().location().toString();
 	}
 
-	private static boolean shouldRenderEntryForLevel(ClientLevel level, WindmillLODEntry entry, float partialTicks) {
+	private boolean shouldRenderEntryForLevel(ClientLevel level, WindmillLODEntry entry, float partialTicks) {
 		if (level == null || entry == null) {
 			return false;
 		}
@@ -260,7 +282,7 @@ public final class WindmillLODRenderManager {
 		return distance >= clipDistance;
 	}
 
-	private static boolean isChunkLoadedForEntry(ClientLevel level, WindmillLODEntry entry) {
+	private boolean isChunkLoadedForEntry(ClientLevel level, WindmillLODEntry entry) {
 		var anchorPosition = entry.anchorPosition;
 		var chunkX = anchorPosition.getX() >> 4;
 		var chunkZ = anchorPosition.getZ() >> 4;
@@ -273,7 +295,7 @@ public final class WindmillLODRenderManager {
 		return chunkSource.hasChunk(chunkX, chunkZ);
 	}
 
-	private static float getClipDistanceForLevel(ClientLevel level, float partialTicks) {
+	private float getClipDistanceForLevel(ClientLevel level, float partialTicks) {
 		var renderProxy = DhApi.Delayed.renderProxy;
 
 		if (renderProxy == null) {
@@ -290,7 +312,7 @@ public final class WindmillLODRenderManager {
 		return clipDistance;
 	}
 
-	private static boolean isHeightClipOverrideActive(ClientLevel level) {
+	private boolean isHeightClipOverrideActive(ClientLevel level) {
 		var minecraft = Minecraft.getInstance();
 		var player = minecraft.player;
 
@@ -304,7 +326,7 @@ public final class WindmillLODRenderManager {
 		return playerHeight > levelMaxHeight + HEIGHT_CLIP_DISTANCE_PADDING;
 	}
 
-	private static Vec3 getCameraPosition() {
+	private Vec3 getCameraPosition() {
 		var minecraft = Minecraft.getInstance();
 		var renderer = minecraft.gameRenderer;
 
@@ -321,7 +343,7 @@ public final class WindmillLODRenderManager {
 		return camera.getPosition();
 	}
 
-	private static double getDistanceToCamera(Vec3 cameraPosition, BlockPos originPosition) {
+	private double getDistanceToCamera(Vec3 cameraPosition, BlockPos originPosition) {
 		var originX = originPosition.getX() + 0.5;
 		var originY = originPosition.getY() + 0.5;
 		var originZ = originPosition.getZ() + 0.5;
@@ -333,7 +355,7 @@ public final class WindmillLODRenderManager {
 		return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
 	}
 
-	private static float updateRenderAngleForEntry(ClientLevel level, WindmillLODEntry entry, float partialTicks) {
+	private float updateRenderAngleForEntry(ClientLevel level, WindmillLODEntry entry, float partialTicks) {
 		var currentTick = level.getGameTime();
 		var lastSynchronizationTick = entry.lastSynchronizationTick;
 		var tickDelta = currentTick - lastSynchronizationTick;
@@ -351,7 +373,7 @@ public final class WindmillLODRenderManager {
 		return wrapDegrees(renderAngle);
 	}
 
-	private static float wrapDegrees(float angle) {
+	private float wrapDegrees(float angle) {
 		var wrapped = angle % 360.0F;
 
 		if (wrapped < 0.0F) {
@@ -361,7 +383,7 @@ public final class WindmillLODRenderManager {
 		return wrapped;
 	}
 
-	private static float getRotationDeltaForAngles(float previousAngle, float nextAngle) {
+	private float getRotationDeltaForAngles(float previousAngle, float nextAngle) {
 		var delta = Math.abs(previousAngle - nextAngle) % 360.0F;
 
 		if (delta > 180.0F) {
@@ -372,7 +394,7 @@ public final class WindmillLODRenderManager {
 	}
 
 	@Nullable
-	private static IDhApiCustomRenderRegister resolveRenderRegister() {
+	private IDhApiCustomRenderRegister resolveRenderRegister() {
 		var worldProxy = DhBridge.worldProxy();
 
 		if (worldProxy == null) {
