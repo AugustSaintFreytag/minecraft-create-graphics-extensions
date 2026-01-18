@@ -96,7 +96,6 @@ public final class WindmillLODRenderManager {
 		var renderGroup = RENDER_GROUPS.get(entry.contraptionId);
 
 		if (renderGroup != null) {
-			entry.renderGroupId = renderGroup.getId();
 			return renderGroup;
 		}
 
@@ -109,7 +108,6 @@ public final class WindmillLODRenderManager {
 			renderGroup.setOriginBlockPos(originPosition);
 
 			renderRegister.add(renderGroup);
-			entry.renderGroupId = renderGroup.getId();
 			RENDER_GROUPS.put(entry.contraptionId, renderGroup);
 		} catch (IllegalArgumentException exception) {
 			Mod.LOGGER.warn("Failed to register windmill render group '{}'.", resourceLocation, exception);
