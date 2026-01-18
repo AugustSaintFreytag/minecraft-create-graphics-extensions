@@ -12,8 +12,6 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.saint.creategrex.library.Size2D;
 
-// TODO: Check if plane size is now obsolete and can be removed.
-
 public final class WindmillLODEntry {
 
 	// Nbt
@@ -28,7 +26,8 @@ public final class WindmillLODEntry {
 	public static final String NBT_ROTATION_SPEED = "RotationSpeed";
 	public static final String NBT_ROTATION_ANGLE = "RotationAngle";
 	public static final String NBT_TICK_REGISTERED = "TickRegistered";
-	public static final String NBT_LAST_SYNCHRONIZATION_TICK = "LastSynchronizationTick";
+	public static final String NBT_TICK_LAST_SYNCHRONIZED = "LastSynchronizationTick";
+	public static final String NBT_IS_STALE = "IsStale";
 
 	// State
 
@@ -45,7 +44,6 @@ public final class WindmillLODEntry {
 	public volatile float rotationAngle;
 	public volatile long lastSynchronizationTick;
 	public volatile boolean isStale;
-	public volatile long renderGroupId;
 
 	// Init
 
@@ -64,7 +62,6 @@ public final class WindmillLODEntry {
 		this.rotationAngle = rotationAngle;
 		this.lastSynchronizationTick = lastSynchronizationTick;
 		this.isStale = false;
-		this.renderGroupId = -1;
 	}
 
 	// Comparison
@@ -98,6 +95,10 @@ public final class WindmillLODEntry {
 			return false;
 		}
 
+		if (isStale != other.isStale) {
+			return false;
+		}
+
 		return true;
 	}
 
@@ -126,8 +127,9 @@ public final class WindmillLODEntry {
 		windmillTag.put(NBT_BLADE_GEOMETRY, bladeGeometry.toNbt());
 		windmillTag.putFloat(NBT_ROTATION_SPEED, rotationSpeed);
 		windmillTag.putFloat(NBT_ROTATION_ANGLE, rotationAngle);
+		windmillTag.putLong(NBT_TICK_LAST_SYNCHRONIZED, lastSynchronizationTick);
 		windmillTag.putLong(NBT_TICK_REGISTERED, tickRegistered);
-		windmillTag.putLong(NBT_LAST_SYNCHRONIZATION_TICK, lastSynchronizationTick);
+		windmillTag.putBoolean(NBT_IS_STALE, isStale);
 
 		return windmillTag;
 	}
@@ -161,14 +163,18 @@ public final class WindmillLODEntry {
 				WindmillBladeGeometry.zero());
 		var rotationSpeed = getFloatForKeyOrDefault(entryTag, 0.0F, NBT_ROTATION_SPEED);
 		var rotationAngle = getFloatForKeyOrDefault(entryTag, 0.0F, NBT_ROTATION_ANGLE);
-		var lastSynchronizationTick = getLongForKeyOrDefault(entryTag, 0L, NBT_LAST_SYNCHRONIZATION_TICK);
+		var lastSynchronizationTick = getLongForKeyOrDefault(entryTag, 0L, NBT_TICK_LAST_SYNCHRONIZED);
 		var tickRegistered = getLongForKeyOrDefault(entryTag, lastSynchronizationTick, NBT_TICK_REGISTERED);
+		var isStale = entryTag.getBoolean(NBT_IS_STALE);
 
 		try {
 			var contraptionIdentifier = UUID.fromString(identifierValue);
 
-			return new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, anchorPosition, rotationAxis, bearingDirection,
+			var entry = new WindmillLODEntry(contraptionIdentifier, dimensionIdentifier, anchorPosition, rotationAxis, bearingDirection,
 					planeSize, bladeGeometry, tickRegistered, rotationSpeed, rotationAngle, lastSynchronizationTick);
+			entry.isStale = isStale;
+
+			return entry;
 		} catch (IllegalArgumentException ignored) {
 			return null;
 		}

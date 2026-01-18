@@ -3,6 +3,7 @@ package net.saint.creategrex;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.saint.creategrex.client.WindmillLODRenderManager;
@@ -16,6 +17,7 @@ public final class ModClient implements ClientModInitializer {
 
 	public static WindmillLODManager WINDMILL_LOD_MANAGER;
 	public static WindmillLODMaterialManager WINDMILL_LOD_MATERIAL_MANAGER;
+	public static WindmillLODRenderManager WINDMILL_LOD_RENDER_MANAGER;
 
 	// Init
 
@@ -31,11 +33,22 @@ public final class ModClient implements ClientModInitializer {
 	private void initializeDistantHorizonsInterop() {
 		WINDMILL_LOD_MANAGER = new WindmillLODManager();
 		WINDMILL_LOD_MATERIAL_MANAGER = new WindmillLODMaterialManager();
+		WINDMILL_LOD_RENDER_MANAGER = new WindmillLODRenderManager();
 
 		reloadWindmillMaterialManagerFromConfig();
 		registerConfigReloadListener();
 
 		WindmillLODSyncUtil.initClient();
+
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			var renderManager = WINDMILL_LOD_RENDER_MANAGER;
+
+			if (renderManager == null) {
+				return;
+			}
+
+			renderManager.clear();
+		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			var level = client.level;
@@ -44,8 +57,14 @@ public final class ModClient implements ClientModInitializer {
 				return;
 			}
 
+			var renderManager = WINDMILL_LOD_RENDER_MANAGER;
+
+			if (renderManager == null) {
+				return;
+			}
+
 			var partialTicks = Minecraft.getInstance().getFrameTime();
-			WindmillLODRenderManager.tick(level, partialTicks);
+			renderManager.tick(level, partialTicks);
 		});
 	}
 
@@ -54,6 +73,7 @@ public final class ModClient implements ClientModInitializer {
 	private static void registerConfigReloadListener() {
 		AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((config, data) -> {
 			reloadWindmillMaterialManagerFromConfig();
+
 			return null;
 		});
 	}
