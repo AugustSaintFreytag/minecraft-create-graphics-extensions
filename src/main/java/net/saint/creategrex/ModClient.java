@@ -41,13 +41,11 @@ public final class ModClient implements ClientModInitializer {
 		WindmillLODSyncUtil.initClient();
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-			var renderManager = WINDMILL_LOD_RENDER_MANAGER;
-
-			if (renderManager == null) {
+			if (WINDMILL_LOD_RENDER_MANAGER == null) {
 				return;
 			}
 
-			renderManager.clear();
+			WINDMILL_LOD_RENDER_MANAGER.clear();
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -73,18 +71,15 @@ public final class ModClient implements ClientModInitializer {
 	private static void registerConfigReloadListener() {
 		AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((config, data) -> {
 			reloadWindmillMaterialManagerFromConfig();
-
 			return null;
 		});
 	}
 
 	private static void reloadWindmillMaterialManagerFromConfig() {
-		var materialManager = WINDMILL_LOD_MATERIAL_MANAGER;
-
-		if (materialManager == null) {
+		if (WINDMILL_LOD_MATERIAL_MANAGER == null) {
 			return;
 		}
 
-		materialManager.reloadFromConfig();
+		WINDMILL_LOD_MATERIAL_MANAGER.reloadFromConfig();
 	}
 }
