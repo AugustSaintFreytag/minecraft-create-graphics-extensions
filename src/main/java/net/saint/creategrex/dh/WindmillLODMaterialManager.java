@@ -36,6 +36,9 @@ public final class WindmillLODMaterialManager {
 
 		bladeMaterial = DHBlockMaterialUtil.decodeBlockMaterial(config.windmillBladeMaterial);
 		bladeColor = ConfigColorUtil.decodeColor(config.windmillBladeColor, Color.GREEN);
+
+		Mod.LOGGER.info("Reloaded windmill LOD material from config, material {}, color {}.", bladeMaterial.toString(),
+				bladeColor.getRGB());
 	}
 
 }

@@ -51,7 +51,6 @@ public class Mod implements ModInitializer {
 
 		AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((config, data) -> {
 			EntityBlacklistManager.reloadFromConfig();
-
 			return null;
 		});
 

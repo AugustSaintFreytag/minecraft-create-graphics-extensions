@@ -2,6 +2,7 @@ package net.saint.creategrex;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -20,9 +21,6 @@ import net.saint.creategrex.dh.WindmillLODServerTracker;
  */
 public final class ModCommands {
 
-	private ModCommands() {
-	}
-
 	// Init
 
 	public static void init() {
@@ -37,25 +35,25 @@ public final class ModCommands {
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildRoot() {
-		return Commands.literal("create-rf")
+		return Commands.literal("create-grex")
 				// Debug
 				.then(Commands.literal("debug")
 						.then(Commands.literal("setWindmillRotationZero").executes(ModCommands::setWindmillRotationZeroForServer))
 						.then(Commands.literal("reregisterLoadedWindmills").executes(ModCommands::reregisterLoadedWindmills)));
 	}
 
-	private static int setWindmillRotationZeroForServer(CommandContext<CommandSourceStack> ctx) {
-		var source = ctx.getSource();
+	private static int setWindmillRotationZeroForServer(CommandContext<CommandSourceStack> context) {
+		var source = context.getSource();
 		var level = (ServerLevel) source.getPlayer().level();
 		var updatedCount = WindmillLODServerTracker.forceSetLoadedWindmillRotationAnglesToZero(level);
 
 		source.sendSuccess(() -> Component.literal("Set windmill rotation angle to zero for " + updatedCount + " loaded entries."), false);
 
-		return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+		return Command.SINGLE_SUCCESS;
 	}
 
-	private static int reregisterLoadedWindmills(CommandContext<CommandSourceStack> ctx) {
-		var source = ctx.getSource();
+	private static int reregisterLoadedWindmills(CommandContext<CommandSourceStack> context) {
+		var source = context.getSource();
 		var server = source.getServer();
 		var updatedCount = new AtomicInteger(0);
 
@@ -66,6 +64,7 @@ public final class ModCommands {
 
 		source.sendSuccess(() -> Component.literal("Re-registered '" + updatedCount.get() + "' loaded windmill entities."), false);
 
-		return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+		return Command.SINGLE_SUCCESS;
 	}
+
 }

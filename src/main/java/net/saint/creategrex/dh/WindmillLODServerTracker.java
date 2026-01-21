@@ -25,6 +25,10 @@ public final class WindmillLODServerTracker {
 	}
 
 	private static void tickLevel(MinecraftServer server, ServerLevel level) {
+		if (server.getPlayerCount() == 0) {
+			return;
+		}
+
 		var currentTick = level.getGameTime();
 
 		if (currentTick % Mod.CONFIG.windmillTickInterval != 0) {
