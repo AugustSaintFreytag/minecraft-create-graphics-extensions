@@ -1,11 +1,15 @@
 package net.saint.creategrex;
 
+import com.seibel.distanthorizons.api.DhApi;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelLoadEvent;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelUnloadEvent;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
+
+import io.github.fabricators_of_create.porting_lib.event.client.ClientWorldEvents;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
 import net.saint.creategrex.client.WindmillLODRenderManager;
 import net.saint.creategrex.dh.WindmillLODManager;
 import net.saint.creategrex.dh.WindmillLODMaterialManager;
@@ -18,6 +22,8 @@ public final class ModClient implements ClientModInitializer {
 	public static WindmillLODManager WINDMILL_LOD_MANAGER;
 	public static WindmillLODMaterialManager WINDMILL_LOD_MATERIAL_MANAGER;
 	public static WindmillLODRenderManager WINDMILL_LOD_RENDER_MANAGER;
+
+	public static boolean isDHRendererInitialized = false;
 
 	// Init
 
@@ -40,12 +46,31 @@ public final class ModClient implements ClientModInitializer {
 
 		WindmillLODSyncUtil.initClient();
 
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-			if (WINDMILL_LOD_RENDER_MANAGER == null) {
-				return;
-			}
+		ClientWorldEvents.UNLOAD.register((client, level) -> {
+			reloadWindmillMaterialManagerFromConfig();
+			clearWindmillLODRenderManager();
 
-			WINDMILL_LOD_RENDER_MANAGER.clear();
+			isDHRendererInitialized = false;
+		});
+
+		DhApi.events.bind(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent() {
+			@Override
+			public void onLevelLoad(DhApiEventParam<EventParam> param) {
+				if (!isDHRendererInitialized) {
+					clearWindmillLODRenderManager();
+					isDHRendererInitialized = true;
+
+					Mod.LOGGER.info("Clearing render references for animated LODs on DH level load.");
+				}
+			}
+		});
+
+		DhApi.events.bind(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent() {
+			@Override
+			public void onLevelUnload(DhApiEventParam<EventParam> param) {
+				isDHRendererInitialized = false;
+				Mod.LOGGER.info("Clearing render references for animated LODs and rearming on DH level unload.");
+			}
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -55,14 +80,12 @@ public final class ModClient implements ClientModInitializer {
 				return;
 			}
 
-			var renderManager = WINDMILL_LOD_RENDER_MANAGER;
-
-			if (renderManager == null) {
+			if (WINDMILL_LOD_RENDER_MANAGER == null) {
 				return;
 			}
 
-			var partialTicks = Minecraft.getInstance().getFrameTime();
-			renderManager.tick(level, partialTicks);
+			var partialTicks = client.getFrameTime();
+			WINDMILL_LOD_RENDER_MANAGER.tick(level, partialTicks);
 		});
 	}
 
@@ -81,5 +104,13 @@ public final class ModClient implements ClientModInitializer {
 		}
 
 		WINDMILL_LOD_MATERIAL_MANAGER.reloadFromConfig();
+	}
+
+	private static void clearWindmillLODRenderManager() {
+		if (WINDMILL_LOD_RENDER_MANAGER == null) {
+			return;
+		}
+
+		WINDMILL_LOD_RENDER_MANAGER.clear();
 	}
 }
