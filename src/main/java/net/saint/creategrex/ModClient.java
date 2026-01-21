@@ -23,7 +23,7 @@ public final class ModClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		// Distant Horizons
+		ModClientCommands.init();
 
 		if (FabricLoader.getInstance().isModLoaded("distanthorizons")) {
 			initializeDistantHorizonsInterop();
