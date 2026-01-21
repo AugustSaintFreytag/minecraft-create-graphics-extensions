@@ -7,6 +7,7 @@
 		"create.AbstractContraptionEntityMixin",
 		"create.ControlledContraptionEntityAccessor",
 		"create.MechanicalBearingBlockEntityAccessor",
+		"create.WindmillBearingBlockEntityMixin",
 		"dh.AbstractDhLevelMixin",
 		"dh.DhLodDataBuilderMixin"
 	],
@@ -23,7 +24,6 @@
 		"create.MixerInstanceMixin",
 		"create.PressInstanceMixin",
 		"create.ContraptionRenderInfoMixin",
-		"create.WindmillBearingBlockEntityMixin",
 		"createdeco.SupportsMixin",
 		"createdeco.CatwalksMixin",
 		"createdeco.MeshFencesMixin",
